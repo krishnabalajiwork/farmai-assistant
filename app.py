@@ -8,6 +8,10 @@ import json
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
+# Use the stored OpenAI API key
+api_key = st.secrets["OPENAI_API_KEY"]
+os.environ["OPENAI_API_KEY"] = api_key
+
 # Import our custom modules
 try:
     from src.rag_system import FarmAIRAG
