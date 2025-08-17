@@ -196,7 +196,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **Atlan Team**: For inspiring this project through their internship opportunity
 - **Agricultural Experts**: Knowledge base compiled from various agricultural institutions
 - **Open Source Community**: LangChain, Streamlit, and other amazing tools
 - **Farmers Worldwide**: The ultimate inspiration for democratizing agricultural knowledge
