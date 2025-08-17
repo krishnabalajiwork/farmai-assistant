@@ -4,13 +4,14 @@ import sys
 from datetime import datetime
 import json
 
+
+api_key = st.secrets["OPENAI_API_KEY"]
+os.environ["OPENAI_API_KEY"] = api_key
+
+
 # Add the current directory to Python path for imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
-
-# Use the stored OpenAI API key
-api_key = st.secrets["OPENAI_API_KEY"]
-os.environ["OPENAI_API_KEY"] = api_key
 
 # Import our custom modules
 try:
@@ -127,10 +128,6 @@ def main():
     with st.sidebar:
         st.header("🔧 Configuration")
         
-        # API Key input
-        api_key = st.text_input("OpenAI API Key", type="password", help="Enter your OpenAI API key")
-        if api_key:
-            os.environ["OPENAI_API_KEY"] = api_key
         
         st.header("📊 Project Info")
         st.info("""
