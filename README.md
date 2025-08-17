@@ -140,10 +140,9 @@ The system includes comprehensive agricultural knowledge covering:
 - **Climate Adaptation**: Climate-smart agriculture practices
 - **Best Practices**: Crop-specific cultivation guidelines
 
-## 🎓 Educational Value (For Atlan Internship)
+## 🎓 Educational Value
 
-This project demonstrates key competencies sought by Atlan:
-
+This project demonstrates:
 ### AI-Native Development
 - Built using AI tools for coding, debugging, and testing
 - Prompt engineering and LLM optimization
