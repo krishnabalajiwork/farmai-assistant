@@ -126,8 +126,6 @@ def main():
     with st.sidebar:
         st.header("📊 Project Info")
         st.info("""
-        **Built for:** Atlan AI Engineering Internship
-        
         **Tech Stack:**
         - RAG with LangChain
         - Multi-agent workflow
