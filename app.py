@@ -4,10 +4,9 @@ import sys
 from datetime import datetime
 import json
 
-
+# Use the stored OpenAI API key from Streamlit secrets
 api_key = st.secrets["OPENAI_API_KEY"]
 os.environ["OPENAI_API_KEY"] = api_key
-
 
 # Add the current directory to Python path for imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -22,7 +21,6 @@ except ImportError as e:
     st.error(f"Error importing modules: {str(e)}")
     st.info("Please ensure all required files are in the same directory as app.py")
     st.stop()
-
 
 # Page configuration
 st.set_page_config(
@@ -126,9 +124,6 @@ def main():
     
     # Sidebar
     with st.sidebar:
-        st.header("🔧 Configuration")
-        
-        
         st.header("📊 Project Info")
         st.info("""
         **Built for:** Atlan AI Engineering Internship
@@ -163,27 +158,6 @@ def main():
         3. **Recommendation Agent**: Provides solutions
         4. **Verification Agent**: Ensures safety & accuracy
         """)
-    
-    # Check for API key
-    if not api_key:
-        st.warning("⚠️ Please enter your OpenAI API key in the sidebar to get started.")
-        st.info("Don't have an API key? Get one at [OpenAI Platform](https://platform.openai.com/)")
-        st.markdown("""
-        ### 🌾 About FarmAI Knowledge Assistant
-        
-        This AI-powered agricultural assistant helps farmers and agricultural professionals by providing:
-        - Expert advice on crop diseases and pest management
-        - Best practices for sustainable farming
-        - Climate-smart agriculture recommendations
-        - Soil health and fertility guidance
-        
-        **Built using cutting-edge AI technologies:**
-        - Advanced RAG (Retrieval-Augmented Generation) pipeline
-        - Multi-agent conversational AI system
-        - Comprehensive agricultural knowledge base
-        - Source-attributed responses for reliability
-        """)
-        return
     
     # Initialize system
     try:
@@ -271,16 +245,16 @@ def main():
                 })
                 display_message("assistant", error_msg)
                 st.rerun()
-    
-    # Footer
-    st.markdown("---")
-    st.markdown("""
-    <div style="text-align: center; color: #666; margin-top: 20px;">
-        <p>🌱 <strong>FarmAI Knowledge Assistant</strong> - Empowering farmers through AI</p>
-        <p>Built with ❤️| 
-        <a href="https://github.com/krishnabalajiwork/farmai-assistant" target="_blank">GitHub Repository</a></p>
-    </div>
-    """, unsafe_allow_html=True)
+
+# Footer
+st.markdown("---")
+st.markdown("""
+<div style="text-align: center; color: #666; margin-top: 20px;">
+    <p>🌱 <strong>FarmAI Knowledge Assistant</strong> - Empowering farmers through AI</p>
+    <p>Built with ❤️| 
+    <a href="https://github.com/krishnabalajiwork/farmai-assistant" target="_blank">GitHub Repository</a></p>
+</div>
+""", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
