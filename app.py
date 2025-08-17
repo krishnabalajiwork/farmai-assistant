@@ -10,9 +10,13 @@ sys.path.append(current_dir)
 
 # Import our custom modules
 try:
-    from rag_system import FarmAIRAG
-    from agents import FarmAIAgents
-    from data_loader import load_agricultural_data
+    #from rag_system import FarmAIRAG
+    #from agents import FarmAIAgents
+    #from data_loader import load_agricultural_data
+    from src.rag_system import FarmAIRAG
+   from src.agents import FarmAIAgents
+   from src.data_loader import load_agricultural_data
+
 except ImportError as e:
     st.error(f"Error importing modules: {str(e)}")
     st.info("Please ensure all required files are in the same directory as app.py")
