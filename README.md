@@ -1,1 +1,0 @@
-# farmai-assistant
