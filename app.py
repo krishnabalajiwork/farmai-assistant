@@ -6,8 +6,7 @@ import json
 
 # Use the stored OpenAI API key from Streamlit secrets
 
-api_key = st.secrets["OPENAI_API_KEY"]
-os.environ["OPENAI_API_KEY"] = api_key
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 
 # Add the current directory to Python path for imports
