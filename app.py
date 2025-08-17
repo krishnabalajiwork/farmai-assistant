@@ -5,8 +5,10 @@ from datetime import datetime
 import json
 
 # Use the stored OpenAI API key from Streamlit secrets
+
 api_key = st.secrets["OPENAI_API_KEY"]
 os.environ["OPENAI_API_KEY"] = api_key
+
 
 # Add the current directory to Python path for imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
