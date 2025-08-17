@@ -280,7 +280,7 @@ def main():
     st.markdown("""
     <div style="text-align: center; color: #666; margin-top: 20px;">
         <p>🌱 <strong>FarmAI Knowledge Assistant</strong> - Empowering farmers through AI</p>
-        <p>Built with ❤️ for Atlan AI Engineering Internship | 
+        <p>Built with ❤️| 
         <a href="https://github.com/krishnabalajiwork/farmai-assistant" target="_blank">GitHub Repository</a></p>
     </div>
     """, unsafe_allow_html=True)
