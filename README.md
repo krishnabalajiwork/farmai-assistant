@@ -7,7 +7,7 @@
 
 ## 🎯 Project Overview
 
-FarmAI Knowledge Assistant is an AI-powered conversational system designed to democratize agricultural knowledge for farmers worldwide. Built as a showcase project for the **Atlan AI Engineering Internship**, it demonstrates advanced RAG (Retrieval-Augmented Generation) pipelines, multi-agent workflows, and AI-native development practices.
+FarmAI Knowledge Assistant is an AI-powered conversational system designed to democratize agricultural knowledge for farmers worldwide. Built as a showcase project, it demonstrates advanced RAG (Retrieval-Augmented Generation) pipelines, multi-agent workflows, and AI-native development practices.
 
 ### 🌍 Social Impact
 - **Problem**: Small-scale farmers lack access to timely, localized agricultural advice
