@@ -2,10 +2,10 @@ import streamlit as st
 import os
 from typing import List, Dict, Any
 
-# Import classes for Google Gemini
+# Import classes for Google Gemini and the community package for FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS # <-- CORRECTED IMPORT
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import RetrievalQA
 from langchain.docstore.document import Document
