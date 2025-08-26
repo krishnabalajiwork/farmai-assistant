@@ -8,6 +8,7 @@ from langchain.llms import OpenAI
 from langchain.chains import RetrievalQA
 from langchain.docstore.document import Document
 import numpy as np
+import httpx # <-- ADDED IMPORT
 
 class FarmAIRAG:
     """Advanced RAG system for agricultural knowledge"""
@@ -26,10 +27,14 @@ class FarmAIRAG:
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         """Build the vector knowledge base from documents"""
         try:
-            # Initialize embeddings
+            # Manually create a client to bypass proxy issues
+            http_client = httpx.Client(proxies="")
+
+            # Initialize embeddings with the fix
             self.embeddings = OpenAIEmbeddings(
                 model="text-embedding-ada-002",
-                openai_api_base="https://api.chatanywhere.tech/v1"
+                openai_api_base="https://api.chatanywhere.tech/v1",
+                client=http_client  # <-- ADDED FIX
             )
             
             # Convert documents to LangChain Document objects
@@ -54,13 +59,14 @@ class FarmAIRAG:
                 self.embeddings
             )
             
-            # Initialize QA chain
+            # Initialize QA chain with the fix
             llm = OpenAI(
-    temperature=0.1,
-    model_name="gpt-3.5-turbo", # <-- Change to this
-    max_tokens=512,
-    openai_api_base="https://api.chatanywhere.tech/v1"
-)
+                temperature=0.1,
+                model_name="gpt-3.5-turbo",
+                max_tokens=512,
+                openai_api_base="https://api.chatanywhere.tech/v1",
+                client=http_client  # <-- ADDED FIX
+            )
             
             self.qa_chain = RetrievalQA.from_chain_type(
                 llm=llm,
