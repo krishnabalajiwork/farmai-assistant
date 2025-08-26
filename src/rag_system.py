@@ -28,7 +28,8 @@ class FarmAIRAG:
         try:
             # Initialize embeddings
             self.embeddings = OpenAIEmbeddings(
-                model="text-embedding-ada-002"
+                model="text-embedding-ada-002",
+                openai_api_base="https://api.chatanywhere.tech/v1"
             )
             
             # Convert documents to LangChain Document objects
@@ -58,6 +59,7 @@ class FarmAIRAG:
                 temperature=0.1,
                 model_name="gpt-3.5-turbo-instruct",
                 max_tokens=512
+                openai_api_base="https://api.chatanywhere.tech/v1"
             )
             
             self.qa_chain = RetrievalQA.from_chain_type(
