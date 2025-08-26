@@ -272,7 +272,7 @@ if st.button("Run API Test"):
                     {"role": "user", "content": "Hello"}
                 ]
             )
-            
+
             # Display the result
             st.success("✅ API Connection Successful!")
             st.write("Response from model:")
