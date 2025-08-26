@@ -55,7 +55,7 @@ class FarmAISystem:
 
             # Use Google's Gemini Pro model
             llm = ChatGoogleGenerativeAI(
-                model="gemini-1.0-pro",
+                model="gemini-1.5-flash-latest",
                 temperature=0.1,
                 google_api_key=self.api_key
             )
