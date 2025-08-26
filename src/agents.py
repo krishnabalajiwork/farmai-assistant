@@ -20,7 +20,7 @@ class FarmAIAgents:
             temperature=0.1, 
             model_name="gpt-3.5-turbo", 
             max_tokens=1024, 
-            openai_api_base="https://api.chatanywhere.tech/v1",
+            openai_api_base="https://api.chatanywhere.org/v1",
             client=http_client  # <-- ADDED FIX
         )
         
