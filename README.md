@@ -6,7 +6,13 @@
 [![GitHub](https://img.shields.io/badge/GitHub-krishnabalajiwork-blue)](https://github.com/krishnabalajiwork/farmai-assistant)
 
 ---
-
+farmai-assistant/
+├── app.py                 # Main Streamlit application with all logic
+├── requirements.txt       # Python library dependencies
+├── README.md              # This documentation file
+├── runtime.txt            # Specifies Python version for Streamlit Cloud
+└── .streamlit/            # Streamlit configuration folder
+    └── config.toml        # App theme and server settings
 ## 🎯 Project Overview
 
 FarmAI Knowledge Assistant is an AI-powered conversational system designed to make agricultural knowledge accessible and engaging for students, hobbyists, and young people interested in pursuing farming. Built as a showcase project, it demonstrates a robust RAG (Retrieval-Augmented Generation) pipeline using modern, reliable, and free-to-start AI services. 
