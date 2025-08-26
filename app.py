@@ -256,3 +256,35 @@ st.markdown("""
 
 if __name__ == "__main__":
     main()
+
+
+st.markdown("---")
+st.header("API Connection Test")
+
+if st.button("Run API Test"):
+    try:
+        with st.spinner("Testing connection to chatanywhere..."):
+            # Use the native OpenAI client for this simple test
+            from openai import OpenAI
+
+            # Make sure your API key is in Streamlit Secrets
+            client = OpenAI(
+                api_key=st.secrets["OPENAI_API_KEY"],
+                base_url="https://api.chatanywhere.tech/v1"
+            )
+
+            # Make the API call (non-streaming for a simple result)
+            completion = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "user", "content": "Hello"}
+                ]
+            )
+
+            # Display the result
+            st.success("✅ API Connection Successful!")
+            st.write("Response from model:")
+            st.info(completion.choices[0].message.content)
+
+    except Exception as e:
+        st.error(f"❌ API Connection Failed. Error: {e}")
