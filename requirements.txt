@@ -1,11 +1,6 @@
-streamlit==1.28.0
-langchain==0.0.309
-openai==1.3.5
-faiss-cpu==1.7.4
-numpy==1.24.3
-requests==2.31.0
-python-dotenv==1.0.0
-openai
-langchain
-faiss-cpu
 streamlit
+langchain
+openai
+faiss-cpu
+langchain-openai
+httpx
