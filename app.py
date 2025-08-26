@@ -89,7 +89,7 @@ st.markdown('<h1 style="text-align: center; color: #2E8B57;">🌾 FarmAI Knowled
 def initialize_system():
     """Load data and build the RAG system."""
     api_key = st.secrets.get("OPENAI_API_KEY")
-    base_url = "https://api.chatanywhere.tech/v1"
+    base_url = "https://api.chatanywhere.org/v1"
 
     if not api_key:
         return None, False
