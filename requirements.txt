@@ -4,4 +4,3 @@ openai
 faiss-cpu
 langchain-openai
 langchain-community
-httpx
