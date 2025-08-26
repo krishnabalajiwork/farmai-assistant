@@ -56,11 +56,11 @@ class FarmAIRAG:
             
             # Initialize QA chain
             llm = OpenAI(
-                temperature=0.1,
-                model_name="gpt-3.5-turbo-instruct",
-                max_tokens=512,
-                openai_api_base="https://api.chatanywhere.tech/v1"
-            )
+    temperature=0.1,
+    model_name="gpt-3.5-turbo", # <-- Change to this
+    max_tokens=512,
+    openai_api_base="https://api.chatanywhere.tech/v1"
+)
             
             self.qa_chain = RetrievalQA.from_chain_type(
                 llm=llm,
