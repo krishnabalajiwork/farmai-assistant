@@ -246,41 +246,33 @@ def main():
 
 # Footer
 st.markdown("---")
-st.markdown("""
-<div style="text-align: center; color: #666; margin-top: 20px;">
-    <p>🌱 <strong>FarmAI Knowledge Assistant</strong> - Empowering farmers through AI</p>
-    <p>Built with ❤️| 
-    <a href="https://github.com/krishnabalajiwork/farmai-assistant" target="_blank">GitHub Repository</a></p>
-</div>
-""", unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    main()
-
-
-st.markdown("---")
 st.header("API Connection Test")
 
 if st.button("Run API Test"):
     try:
         with st.spinner("Testing connection to chatanywhere..."):
-            # Use the native OpenAI client for this simple test
+            # Import the necessary libraries
             from openai import OpenAI
+            import httpx
 
-            # Make sure your API key is in Streamlit Secrets
+            # Manually create a clean http client to bypass proxy issues
+            http_client = httpx.Client(proxies="")
+
+            # Pass the custom client to the OpenAI library
             client = OpenAI(
                 api_key=st.secrets["OPENAI_API_KEY"],
-                base_url="https://api.chatanywhere.tech/v1"
+                base_url="https://api.chatanywhere.tech/v1",
+                http_client=http_client
             )
 
-            # Make the API call (non-streaming for a simple result)
+            # Make the API call
             completion = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "user", "content": "Hello"}
                 ]
             )
-
+            
             # Display the result
             st.success("✅ API Connection Successful!")
             st.write("Response from model:")
