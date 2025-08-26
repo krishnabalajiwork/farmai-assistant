@@ -7,13 +7,12 @@
 
 ## 🎯 Project Overview
 
-FarmAI Knowledge Assistant is an AI-powered conversational system designed to democratize agricultural knowledge for farmers worldwide. Built as a showcase project, it demonstrates a robust RAG (Retrieval-Augmented Generation) pipeline using modern, reliable, and free-to-start AI services.
-https://farmai-assistant.streamlit.app/
+FarmAI Knowledge Assistant is an AI-powered conversational system designed to make agricultural knowledge accessible and engaging for students, hobbyists, and young people interested in pursuing farming. Built as a showcase project, it demonstrates a robust RAG (Retrieval-Augmented Generation) pipeline using modern, reliable, and free-to-start AI services.
 
 ### 🌍 Social Impact
-- **Problem**: Small-scale farmers lack access to timely, localized agricultural advice.
-- **Solution**: A RAG-powered chatbot providing instant access to expert knowledge.
-- **Impact**: Democratizes agricultural expertise, especially for resource-constrained farmers.
+- **Problem**: Young people and aspiring farmers often face a steep learning curve and lack modern, engaging resources to get started in agriculture.
+- **Solution**: A RAG-powered chatbot providing instant access to foundational knowledge.
+- **Impact**: Inspires and empowers the next generation of agricultural enthusiasts by providing an easy-to-use, AI-powered educational tool.
 
 ## 🚀 Key Features
 
@@ -39,3 +38,89 @@ https://farmai-assistant.streamlit.app/
 ## 📁 Project Structure
 
 The project has been simplified to a single-file architecture for stability and ease of deployment.
+
+farmai-assistant/
+├── app.py                 # Main Streamlit application with all logic
+├── requirements.txt       # Python dependencies
+├── README.md              # This file
+└── .streamlit/
+└── config.toml        # Streamlit configuration
+
+
+## 🚀 Quick Start
+
+### Local Development
+
+1. **Clone the repository**
+```bash
+git clone [https://github.com/krishnabalajiwork/farmai-assistant.git](https://github.com/krishnabalajiwork/farmai-assistant.git)
+cd farmai-assistant
+Install dependencies
+
+Bash
+
+pip install -r requirements.txt
+Set up Google API Key
+
+Bash
+
+# Get your free API key from Google AI Studio (aistudio.google.com)
+export GOOGLE_API_KEY="your-google-api-key-here"
+Run the application
+
+Bash
+
+streamlit run app.py
+Streamlit Cloud Deployment
+Fork this repository to your GitHub account.
+
+Visit Google AI Studio to create a free API key.
+
+Visit Streamlit Cloud and deploy your forked repository.
+
+In the app's Settings -> Secrets, add your Google API key:
+
+Ini, TOML
+
+GOOGLE_API_KEY = "your-google-api-key-here"
+💡 Usage Examples
+Example Queries
+"My tomato plants have yellow spots and wilting leaves. What should I do?"
+
+"When is the best time to plant rice in monsoon season?"
+
+"Organic pest control methods for vegetables"
+
+RAG Workflow
+User Query: A student or enthusiast asks a question about a crop disease.
+
+Document Retrieval: The system searches its vector knowledge base to find the most relevant agricultural guides.
+
+Answer Synthesis: The Gemini model receives the user's question and the retrieved documents, then generates a comprehensive, helpful answer based on the provided context.
+
+📊 Knowledge Base
+The system includes agricultural knowledge covering:
+
+Crop Diseases: Identification, symptoms, and treatment.
+
+Pest Management: Integrated pest management strategies.
+
+Best Practices: Crop-specific cultivation guidelines.
+
+🎓 Educational Value
+This project is an excellent case study in:
+
+Pragmatic AI Development: Demonstrates pivoting from one API (OpenAI) to another (Google Gemini) to solve real-world compatibility and access issues.
+
+Resilient RAG Architecture: The core RAG pipeline is robust and can be adapted to work with different LLMs and embedding models.
+
+Environment-Specific Debugging: Shows how to solve common deployment issues like asynchronous event loops (nest-asyncio) and dependency management (langchain-community).
+
+📞 Contact
+Chintha Krishna Balaji
+
+📧 Email: krishnabalajiwork@gmail.com
+
+💼 LinkedIn: chintha-krishna-balaji
+
+🐱 GitHub: krishnabalajiwork
