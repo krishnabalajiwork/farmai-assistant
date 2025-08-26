@@ -5,13 +5,25 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 import json
 import re
+import httpx # <-- ADDED IMPORT
 
 class FarmAIAgents:
     """Multi-agent system for agricultural question processing"""
     
     def __init__(self, rag_system):
         self.rag_system = rag_system
-        self.llm = OpenAI(temperature=0.1, model_name="gpt-3.5-turbo", max_tokens=1024, openai_api_base="https://api.chatanywhere.tech/v1")
+        
+        # Manually create a client to bypass proxy issues
+        http_client = httpx.Client(proxies="")
+        
+        self.llm = OpenAI(
+            temperature=0.1, 
+            model_name="gpt-3.5-turbo", 
+            max_tokens=1024, 
+            openai_api_base="https://api.chatanywhere.tech/v1",
+            client=http_client  # <-- ADDED FIX
+        )
+        
         # Initialize agents
         self.query_classifier = QueryClassifierAgent(self.llm)
         self.diagnostic_agent = DiagnosticAgent(self.llm, self.rag_system)
