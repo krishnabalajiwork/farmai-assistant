@@ -50,6 +50,7 @@ https://farmai-assistant.streamlit.app/
 The project has been simplified to a single-file architecture for stability and ease of deployment.
 
 farmai-assistant/
+
 ├── app.py                 # Main Streamlit application with all logic 
 
 ├── requirements.txt       # Python dependencies 
