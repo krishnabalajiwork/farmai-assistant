@@ -1,11 +1,15 @@
 import streamlit as st
 import os
 from typing import List, Dict, Any
+import nest_asyncio
+
+# Apply the patch for the event loop issue
+nest_asyncio.apply()
 
 # Import classes for Google Gemini and the community package for FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_community.vectorstores import FAISS # <-- CORRECTED IMPORT
+from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import RetrievalQA
 from langchain.docstore.document import Document
