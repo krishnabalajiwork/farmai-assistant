@@ -7,6 +7,7 @@
 FarmAI Knowledge Assistant is an AI-powered conversational system designed to make agricultural knowledge accessible and engaging for students, hobbyists, and young people interested in pursuing farming. Built as a showcase project, it demonstrates a robust RAG (Retrieval-Augmented Generation) pipeline using modern, reliable, and free-to-start AI services. 
 [https://farmai-assistant.streamlit.app/](https://farmai-assistant.streamlit.app/)
 
+
 ### 🌍 Social Impact
 - **Problem**: Young people and aspiring farmers often face a steep learning curve and lack modern, engaging resources to get started in agriculture.
 - **Solution**: A RAG-powered chatbot providing instant access to foundational knowledge.
