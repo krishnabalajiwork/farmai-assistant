@@ -15,28 +15,26 @@ if not api_key:
     st.error("Missing API Key! Please add 'GOOGLE_API_KEY' to your Streamlit Secrets.")
 else:
     try:
-        # THE CRITICAL FIX: Changed to 'gemini-embedding-001'
-        # The old 'text-embedding-004' was retired Jan 2026.
+        # THE FIX: Using the absolute stable version for embeddings
         embeddings = GoogleGenerativeAIEmbeddings(
             model="models/gemini-embedding-001", 
             google_api_key=api_key,
-            task_type="retrieval_query" 
+            task_type="retrieval_query"
         )
-
+        
+        # THE FIX: Using the most widely supported stable model identifier
         llm = ChatGoogleGenerativeAI(
-            model="gemini-pro", 
+            model="gemini-1.5-flash", 
             google_api_key=api_key,
             temperature=0.3
         )
 
-        
         knowledge_base_data = [
             Document(page_content="Tomato Blight: Identified by brown spots with yellow halos. Management: Ensure air circulation and use copper-based fungicides."),
             Document(page_content="Rice Stem Borer: Larvae cause 'dead heart' in young plants. Management: Use pheromone traps and avoid excessive nitrogen."),
             Document(page_content="Tomato Sorting: High-quality tomatoes should be firm, uniform in color, and free of cracks or blemishes.")
         ]
         
-        # Build the searchable index
         vectorstore = FAISS.from_documents(knowledge_base_data, embeddings)
         st.success("✅ FarmAI Knowledge Base is Live!")
 
@@ -52,16 +50,20 @@ else:
             with st.chat_message("user"):
                 st.write(user_query)
 
-            # Retrieve and Generate
+            # Manual RAG search
             relevant_docs = vectorstore.similarity_search(user_query, k=2)
             context_text = "\n\n".join([d.page_content for d in relevant_docs])
+
+            # Building the prompt
             full_prompt = f"Context: {context_text}\n\nQuestion: {user_query}"
 
             with st.chat_message("assistant"):
+                # Using invoke to talk to Gemini
                 ai_response = llm.invoke(full_prompt)
                 answer = ai_response.content
                 st.write(answer)
                 st.session_state.messages.append({"role": "assistant", "content": answer})
 
     except Exception as e:
+        # Improved error reporting
         st.error(f"Initialization Error: {e}")
