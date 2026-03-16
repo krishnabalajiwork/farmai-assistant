@@ -6,12 +6,12 @@ import nest_asyncio
 # Apply the patch for the event loop issue
 nest_asyncio.apply()
 
-# MODULAR IMPORTS
+# STABLE IMPORTS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_classic.chains import create_retrieval_chain
-from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 
@@ -38,7 +38,7 @@ def load_agricultural_data() -> List[Dict[str, Any]]:
     ]
 
 # ==============================================================================
-# PART 2: RAG SYSTEM (Google Gemini Version)
+# PART 2: RAG SYSTEM
 # ==============================================================================
 class FarmAISystem:
     def __init__(self, api_key: str):
@@ -48,9 +48,9 @@ class FarmAISystem:
 
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         try:
-            # FIX: Using 'models/text-embedding-004' with the stable v1 API path
+            # FIX: Using the most universally available embedding model
             embeddings = GoogleGenerativeAIEmbeddings(
-                model="models/text-embedding-004", 
+                model="models/embedding-001", 
                 google_api_key=self.api_key
             )
             
@@ -86,20 +86,8 @@ class FarmAISystem:
             
             return True
         except Exception as e:
-            # If text-embedding-004 still fails, we try the newest fallback
-            st.warning("Primary model failed, attempting fallback model...")
-            try:
-                embeddings = GoogleGenerativeAIEmbeddings(
-                    model="models/gemini-embedding-001", 
-                    google_api_key=self.api_key
-                )
-                vectorstore = FAISS.from_documents(final_docs, embeddings)
-                retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
-                self.rag_chain = create_retrieval_chain(retriever, question_answer_chain)
-                return True
-            except:
-                st.error(f"Critical Error building knowledge base: {e}")
-                return False
+            st.error(f"Critical Error: {e}")
+            return False
 
     def query(self, question: str):
         if not self.rag_chain:
@@ -131,7 +119,7 @@ farm_ai, success = initialize_system()
 
 if success:
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "How can I help with your crops today?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I help with your crops today?"}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
