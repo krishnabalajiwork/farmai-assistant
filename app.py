@@ -15,11 +15,12 @@ if not api_key:
     st.error("Missing API Key! Please add 'GOOGLE_API_KEY' to your Streamlit Secrets.")
 else:
     try:
-        # THE FIX: No 'models/' prefix + task_type added
+        # THE CRITICAL FIX: Changed to 'gemini-embedding-001'
+        # The old 'text-embedding-004' was retired Jan 2026.
         embeddings = GoogleGenerativeAIEmbeddings(
-            model="text-embedding-004", 
+            model="models/gemini-embedding-001", 
             google_api_key=api_key,
-            task_type="retrieval_query"
+            task_type="retrieval_query" 
         )
         
         llm = ChatGoogleGenerativeAI(
@@ -34,6 +35,7 @@ else:
             Document(page_content="Tomato Sorting: High-quality tomatoes should be firm, uniform in color, and free of cracks or blemishes.")
         ]
         
+        # Build the searchable index
         vectorstore = FAISS.from_documents(knowledge_base_data, embeddings)
         st.success("✅ FarmAI Knowledge Base is Live!")
 
@@ -49,9 +51,9 @@ else:
             with st.chat_message("user"):
                 st.write(user_query)
 
+            # Retrieve and Generate
             relevant_docs = vectorstore.similarity_search(user_query, k=2)
             context_text = "\n\n".join([d.page_content for d in relevant_docs])
-
             full_prompt = f"Context: {context_text}\n\nQuestion: {user_query}"
 
             with st.chat_message("assistant"):
