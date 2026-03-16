@@ -1,15 +1,17 @@
 import streamlit as st
 import nest_asyncio
-import google.generativeai as genai
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
 
-# Required for Streamlit's async environment
+# Fix for Streamlit's async environment
 nest_asyncio.apply()
 
-st.set_page_config(page_title="FarmAI Grounded Assistant", page_icon="🌾")
-st.title("🌾 FarmAI Grounded Assistant")
+st.set_page_config(page_title="FarmAI OpenAI Assistant", page_icon="🌾")
+st.title("🌾 FarmAI Grounded Assistant (OpenAI)")
 
 # --- 1. Your Agricultural Manual Data ---
 def load_manual_data():
@@ -22,25 +24,51 @@ def load_manual_data():
         Document(page_content="Tomato Sorting: High-quality tomatoes must be firm, uniform in color, and free of cracks.")
     ]
 
-api_key = st.secrets.get("GOOGLE_API_KEY")
+# Get the OpenAI key from secrets
+api_key = st.secrets.get("OPENAI_API_KEY")
 
 if api_key:
     try:
-        # CONFIGURE DIRECT GOOGLE SDK (Forces stable production path)
-        genai.configure(api_key=api_key)
-        
-        # 2. SET UP STABLE EMBEDDINGS
-        # Using gemini-embedding-001 which is the 2026 production standard
-        embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/gemini-embedding-001", 
-            google_api_key=api_key,
-            task_type="retrieval_query"
+        # 2. SET UP OPENAI EMBEDDINGS
+        # text-embedding-3-small is the 2026 standard for high-speed RAG
+        embeddings = OpenAIEmbeddings(
+            model="text-embedding-3-small", 
+            openai_api_key=api_key
         )
         
         vectorstore = FAISS.from_documents(load_manual_data(), embeddings)
-        st.success("✅ Grounded Knowledge Base Active!")
+        retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 
-        # Chat UI Setup
+        # 3. SET UP OPENAI LLM
+        llm = ChatOpenAI(
+            model="gpt-4o", 
+            openai_api_key=api_key,
+            temperature=0 # Strict factualness
+        )
+
+        # STRICT GROUNDING PROMPT
+        prompt = ChatPromptTemplate.from_template("""
+        You are a specialized Agricultural Assistant. 
+        You MUST ONLY use the provided manual context to answer. 
+        If the answer is NOT in the context, say: "I'm sorry, my manual does not contain information on that topic."
+        
+        CONTEXT:
+        {context}
+        
+        QUESTION:
+        {question}
+        """)
+
+        # LCEL Chain - Modern standard that avoids module errors
+        rag_chain = (
+            {"context": retriever, "question": RunnablePassthrough()}
+            | prompt
+            | llm
+            | StrOutputParser()
+        )
+
+        st.success("✅ OpenAI Knowledge Base Active!")
+
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
@@ -48,37 +76,18 @@ if api_key:
             with st.chat_message(msg["role"]):
                 st.write(msg["content"])
 
-        if user_query := st.chat_input("Ask a question from the manual..."):
+        if user_query := st.chat_input("Ask about your crops..."):
             st.session_state.messages.append({"role": "user", "content": user_query})
             with st.chat_message("user"):
                 st.write(user_query)
             
-            # RETRIEVAL: Find the specific manual paragraphs
-            relevant_docs = vectorstore.similarity_search(user_query, k=2)
-            context = "\n\n".join([d.page_content for d in relevant_docs])
-
             with st.chat_message("assistant"):
-                with st.spinner("Searching manual..."):
-                    # 3. GENERATION: Direct SDK Call (Bypasses the LangChain v1beta issue)
-                    model = genai.GenerativeModel('gemini-1.5-flash')
-                    
-                    prompt = f"""You are a specialized Agricultural Assistant. 
-                    You MUST ONLY use the provided manual context to answer. 
-                    If the answer is NOT in the context, say: "I'm sorry, my manual does not contain information on that topic."
-                    
-                    CONTEXT FROM MANUAL:
-                    {context}
-                    
-                    QUESTION:
-                    {user_query}"""
-                    
-                    response = model.generate_content(prompt)
-                    answer = response.text
-                    st.write(answer)
-                    st.session_state.messages.append({"role": "assistant", "content": answer})
+                with st.spinner("Analyzing manual with GPT-4o..."):
+                    response = rag_chain.invoke(user_query)
+                    st.write(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
 
     except Exception as e:
         st.error(f"System Error: {e}")
-        st.info("If errors persist, please REBOOT the app in the Streamlit Dashboard.")
 else:
-    st.warning("Please add GOOGLE_API_KEY to Streamlit Secrets.")
+    st.warning("Please add OPENAI_API_KEY to your Streamlit Secrets.")
