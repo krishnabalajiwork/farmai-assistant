@@ -6,12 +6,12 @@ import nest_asyncio
 # Apply the patch for the event loop issue
 nest_asyncio.apply()
 
-# MODULAR IMPORTS
+# STABLE IMPORTS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_classic.chains import create_retrieval_chain
-from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 
@@ -19,6 +19,7 @@ from langchain_core.documents import Document
 # PART 1: DATA LOADER CODE
 # ==============================================================================
 def load_agricultural_data() -> List[Dict[str, Any]]:
+    """Knowledge base containing detailed agricultural data."""
     return [
         {
             "title": "Tomato Disease and Pest Management",
@@ -47,11 +48,10 @@ class FarmAISystem:
 
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         try:
-            # FIX: Using the simplified model name for text-embedding-004
+            # FIX: Using the most stable embedding model name
             embeddings = GoogleGenerativeAIEmbeddings(
-                model="text-embedding-004", 
-                google_api_key=self.api_key,
-                task_type="retrieval_query"
+                model="models/embedding-001", 
+                google_api_key=self.api_key
             )
             
             langchain_docs = [
@@ -70,8 +70,10 @@ class FarmAISystem:
             )
 
             system_prompt = (
-                "You are an expert agricultural assistant. Use the following context "
-                "to answer the question.\n\nContext: {context}"
+                "You are an expert agricultural assistant. Use the following pieces of "
+                "retrieved context to answer the question. If you don't know the answer, "
+                "say that you don't know. Use three sentences maximum and keep the "
+                "answer concise.\n\nContext: {context}"
             )
             
             prompt = ChatPromptTemplate.from_messages([
@@ -79,12 +81,13 @@ class FarmAISystem:
                 ("human", "{input}"),
             ])
 
+            # Building the chain
             question_answer_chain = create_stuff_documents_chain(llm, prompt)
             self.rag_chain = create_retrieval_chain(retriever, question_answer_chain)
             
             return True
         except Exception as e:
-            st.error(f"Initialization Error: {e}")
+            st.error(f"Error building knowledge base: {e}")
             return False
 
     def query(self, question: str):
@@ -99,7 +102,7 @@ class FarmAISystem:
 # ==============================================================================
 # PART 3: MAIN STREAMLIT APP
 # ==============================================================================
-st.set_page_config(page_title="FarmAI Knowledge Assistant", page_icon="🌾")
+st.set_page_config(page_title="FarmAI Knowledge Assistant", page_icon="🌾", layout="wide")
 st.title("🌾 FarmAI Knowledge Assistant")
 
 @st.cache_resource
@@ -117,7 +120,7 @@ farm_ai, success = initialize_system()
 
 if success:
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "Ready! How can I help you today?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "System initialized! How can I help with your crops today?"}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -129,9 +132,9 @@ if success:
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Analyzing..."):
+            with st.spinner("Analyzing knowledge base..."):
                 response = farm_ai.query(prompt)
                 st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
 else:
-    st.info("Still having trouble? Check if your Google API Key is valid at aistudio.google.com.")
+    st.error("Invalid GOOGLE_API_KEY. Please check your Secrets in Streamlit Cloud.")
