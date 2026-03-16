@@ -10,11 +10,8 @@ nest_asyncio.apply()
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-# Using the Classic bridge for v0.3 stability
 from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
-
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 
@@ -50,10 +47,11 @@ class FarmAISystem:
 
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         try:
-            # STABLE FIX: Back to embedding-001, the most widely supported model
+            # FIX: Using the newest stable model name and adding task_type
             embeddings = GoogleGenerativeAIEmbeddings(
-                model="models/embedding-001", 
-                google_api_key=self.api_key
+                model="models/text-embedding-004", 
+                google_api_key=self.api_key,
+                task_type="retrieval_document"
             )
             
             langchain_docs = [
@@ -119,7 +117,7 @@ farm_ai, success = initialize_system()
 
 if success:
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "How can I help with your crops today?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "Success! The system is live. How can I help you today?"}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -131,9 +129,9 @@ if success:
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Analyzing..."):
+            with st.spinner("Searching..."):
                 response = farm_ai.query(prompt)
                 st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
 else:
-    st.error("Invalid GOOGLE_API_KEY. Please check your Secrets.")
+    st.error("Missing/Invalid GOOGLE_API_KEY. Please check your Secrets dashboard.")
