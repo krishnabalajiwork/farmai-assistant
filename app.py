@@ -79,8 +79,6 @@ class FarmAISystem:
                 },
                 temperature=0
             )
-            
-            )
 
             system_prompt = (
                 "You are an expert agricultural assistant. Use the following pieces of "
