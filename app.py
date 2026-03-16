@@ -47,11 +47,11 @@ class FarmAISystem:
 
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         try:
-            # FIX: Using the newest stable model name and adding task_type
+            # FIX: Using the simplified model name for text-embedding-004
             embeddings = GoogleGenerativeAIEmbeddings(
-                model="models/text-embedding-004", 
+                model="text-embedding-004", 
                 google_api_key=self.api_key,
-                task_type="retrieval_document"
+                task_type="retrieval_query"
             )
             
             langchain_docs = [
@@ -84,7 +84,7 @@ class FarmAISystem:
             
             return True
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"Initialization Error: {e}")
             return False
 
     def query(self, question: str):
@@ -117,7 +117,7 @@ farm_ai, success = initialize_system()
 
 if success:
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "Success! The system is live. How can I help you today?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "Ready! How can I help you today?"}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -129,9 +129,9 @@ if success:
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Searching..."):
+            with st.spinner("Analyzing..."):
                 response = farm_ai.query(prompt)
                 st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
 else:
-    st.error("Missing/Invalid GOOGLE_API_KEY. Please check your Secrets dashboard.")
+    st.info("Still having trouble? Check if your Google API Key is valid at aistudio.google.com.")
