@@ -52,9 +52,12 @@ class FarmAISystem:
 
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         try:
-            # Note: We use OpenAI embeddings as they are standard, 
-            # but if you use OpenRouter for embeddings, update the base_url here too.
-            embeddings = OpenAIEmbeddings(openai_api_key=self.api_key)
+            # FIX: Use OpenRouter for Embeddings too
+            embeddings = OpenAIEmbeddings(
+                model="openai/text-embedding-3-small", 
+                openai_api_key=self.api_key,
+                base_url="https://openrouter.ai/api/v1"
+            )
             
             langchain_docs = [
                 Document(page_content=doc['content'], metadata={'title': doc.get('title', '')}) 
@@ -65,9 +68,9 @@ class FarmAISystem:
             vectorstore = FAISS.from_documents(final_docs, embeddings)
             retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-            # OPENROUTER CONFIGURATION
+            # FIX: Use OpenRouter for the Chat Model
             llm = ChatOpenAI(
-                model="openai/gpt-3.5-turbo", # Change this to any OpenRouter model id
+                model="google/gemini-2.0-flash-001", # You can use any model available on OpenRouter
                 openai_api_key=self.api_key,
                 base_url="https://openrouter.ai/api/v1",
                 default_headers={
@@ -75,6 +78,8 @@ class FarmAISystem:
                     "X-Title": "FarmAI Assistant",
                 },
                 temperature=0
+            )
+            
             )
 
             system_prompt = (
