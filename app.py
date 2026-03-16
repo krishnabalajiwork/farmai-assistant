@@ -11,9 +11,9 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGener
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-# ABSOLUTE PATHS FOR v0.3
-from langchain.chains.retrieval import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+# FIX: Using the Classic bridge for v0.3 compatibility
+from langchain_classic.chains import create_retrieval_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
@@ -51,7 +51,7 @@ class FarmAISystem:
 
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         try:
-            # Use the stable embedding model
+            # Using the stable embedding model
             embeddings = GoogleGenerativeAIEmbeddings(
                 model="models/embedding-001", 
                 google_api_key=self.api_key
@@ -84,7 +84,7 @@ class FarmAISystem:
                 ("human", "{input}"),
             ])
 
-            # Building the chain using the direct imports
+            # Modern RAG chain construction
             question_answer_chain = create_stuff_documents_chain(llm, prompt)
             self.rag_chain = create_retrieval_chain(retriever, question_answer_chain)
             
@@ -123,7 +123,7 @@ farm_ai, success = initialize_system()
 
 if success:
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "The system is online. How can I assist you with your crops?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "Welcome! I am ready to help with your farming questions."}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -135,9 +135,9 @@ if success:
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Analyzing knowledge base..."):
+            with st.spinner("Searching knowledge base..."):
                 response = farm_ai.query(prompt)
                 st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
 else:
-    st.error("Missing Google API Key. Check your Streamlit Secrets.")
+    st.error("Please ensure 'GOOGLE_API_KEY' is valid in Streamlit Secrets.")
