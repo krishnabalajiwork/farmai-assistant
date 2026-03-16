@@ -6,12 +6,11 @@ import nest_asyncio
 # Apply the patch for the event loop issue
 nest_asyncio.apply()
 
-# Import classes for Google Gemini and the community package for FAISS
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_google_genai import ChatGoogleGenerativeAI
+# Updated Imports for OpenAI and Community packages
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain.chains import RetrievalQA
+from langchain_community.chains import RetrievalQA
 from langchain.docstore.document import Document
 
 # ==============================================================================
@@ -19,14 +18,7 @@ from langchain.docstore.document import Document
 # ==============================================================================
 def load_agricultural_data() -> List[Dict[str, Any]]:
     """
-    Load extensive agricultural knowledge data including pests, diseases,
-    pest management, cultivation practices, integrated pest management, 
-    nutritional recommendations, soil health guidelines, and environmental 
-    stewardship, across major crops like tomato, rice, maize, wheat, 
-    plus additional crops, pests and best practices.
-
-    The content entries feature rich, multi-paragraph descriptions 
-    to reach 1000+ lines when fully populated.
+    Knowledge base containing detailed agricultural data.
     """
     knowledge_base = [
         {
@@ -34,222 +26,89 @@ def load_agricultural_data() -> List[Dict[str, Any]]:
             "content": """
 Tomato Disease Management:
 1. Tomato Blight (Early Blight and Late Blight):
-- Symptoms: Early blight appears as brown concentric spots primarily on older leaves; late blight causes dark water-soaked lesions usually on leaves and stems accompanied by white fungal growth under moist conditions.
-- Causal Agents: Alternaria solani (early blight), Phytophthora infestans (late blight).
-- Epidemiology: Both thrive in humid, warm conditions from 18 to 30°C; late blight spreads rapidly during cool, wet weather.
-- Management Strategy:
-  A. Use certified disease-free seeds and resistant varieties like 'Roma VF' and 'Cherry VF'.
-  B. Employ crop rotation and avoid planting solanaceous plants consecutively.
-  C. Implement fungicide schedules starting at first symptom detection, favoring copper-based fungicides and systemic protectants.
-  D. Maintain adequate spacing for airflow; prune lower leaves to prevent humidity buildup.
-  E. Irrigate at soil level, avoiding leaf wetness.
+- Symptoms: Early blight appears as brown concentric spots; late blight causes dark water-soaked lesions.
+- Causal Agents: Alternaria solani (early), Phytophthora infestans (late).
+- Management: Use certified seeds, crop rotation, copper-based fungicides, and soil-level irrigation.
 
 2. Tomato Mosaic Virus (ToMV):
-- Symptoms: Mottled light and dark green leaf patterns, leaf curling, stunting, reduced fruit yield.
-- Transmission: Mechanical injury, aphids, farm tools.
-- Control Measures:
-  A. Destroy infected plants immediately.
-  B. Clean tools and equipment regularly.
-  C. Use resistant cultivars and virus-free seeds.
-  D. Control aphid vector populations with insecticides or biological controls like lady beetles.
-
-3. Fusarium Wilt:
-- Characterized by vascular discoloration and wilting.
-- Soilborne fungus persists in soil for several years.
-- Control by soil solarization, resistant cultivars, and organic amendments.
-
-4. Whitefly Management:
-- Whiteflies cause direct feeding damage and transmit Tomato Yellow Leaf Curl Virus.
-- Control through yellow sticky traps, biological agents (Encarsia spp., Eretmocerus spp.), and insecticidal soaps.
-
-5. Nutrient Management:
-- Balanced fertilization with potassium to enhance plant resistance.
-- Avoid excess nitrogen which promotes vegetative growth susceptible to fungal infection.
-
-6. Post-Harvest Disease Management:
-- Proper sanitation of storage facilities.
-- Use of fungicide treatments on harvested fruits before storage.
-
-... (Expand with detailed subtopics: nematodes, bacterial spot, powdery mildew, physiological disorders, yield optimization, and climate adaptability)
-
+- Symptoms: Mottled green leaf patterns, curling, stunting.
+- Control: Destroy infected plants, clean tools, and control aphid populations.
 """,
-            "source": "Comprehensive Agricultural Extension Publications, Research Journals",
+            "source": "Agricultural Extension Publications",
             "category": "disease_management",
             "crop": "tomato"
         },
         {
-            "title": "Rice Crop Pest and Disease Management Extended Manual",
+            "title": "Rice Crop Pest and Disease Management",
             "content": """
-Pest and Disease Complex in Rice:
-1. Stem Borer Biology and Control:
-- Life cycle details of Yellow, Pink, Striped stem borers with diagrams.
-- Action thresholds detailed for various growth stages.
-- Recommended pheromone trap deployment densities.
-- Resistant varieties including 'Swarna', 'IR64'.
-
-2. Blast Disease (Magnaporthe oryzae):
-- Detailed pathogen life cycle and spore dissemination.
-- Symptoms on leaf, collar, neck, and panicle blast.
-- Integrated management including nitrogen timing, water management, and fungicide application protocols.
-
-3. Planthopper Management:
-- Population dynamics with weather correlations.
-- Use of systemic insecticides and biopesticides.
-- Biological control agents descriptions including spiders and predatory bugs.
-
-4. Nutrient Management:
-- Precision fertilization to prevent excess nitrogen use promoting pests.
-- Soil testing best practices.
-- Use of green manures and biofertilizers like Azolla.
-
-5. Climate Resilience:
-- Flood and drought resilient varieties.
-- Impact of climate change on pest lifecycles and mitigation measures.
-
-6. Farm Mechanization and Crop Management Best Practices:
-- Best timings for transplanting.
-- Water management for alternate wetting and drying.
-- Weed control integrated approaches including chemical and mechanical.
-
-... (More on storage pests, post-harvest losses, grain quality preservation)
-
+Pest Complex in Rice:
+1. Stem Borer: Yellow, Pink, and Striped borers. Use pheromone traps and resistant varieties like 'Swarna'.
+2. Blast Disease: Caused by Magnaporthe oryzae. Manage via nitrogen timing and water management.
+3. Planthoppers: Controlled via systemic insecticides and biological agents like spiders.
 """,
-            "source": "IRRI, National Plant Protection Programs, Peer-reviewed Publications",
+            "source": "IRRI Publications",
             "category": "crop_management",
             "crop": "rice"
         },
         {
-            "title": "Maize Integrated Pest Management and Cultivation Guidelines",
+            "title": "Maize Integrated Pest Management",
             "content": """
 Major Maize Production Challenges:
-1. Stem Borer Management:
-- Detailed larval developmental stages and behavior.
-- Cultural practices: destruction of crop residues to break lifecycle.
-- Use of parasitoids (Cotesia flavipes) and insect growth regulators.
-- Field sanitation and trap crops.
-
-2. Leaf Blight Diseases:
-- Turcicum and Maydis Leaf Blights: symptoms, pathogenic fungi characteristics.
-- Fungicide types, optimal application timing and intervals.
-- Use of resistant hybrids and seed treatment.
-
-3. Earworm (Helicoverpa armigera):
-- Monitoring methods including pheromone traps.
-- Economic thresholds and decision-making models.
-- Biological controls: Bacillus thuringiensis-based products, entomopathogenic fungi.
-
-4. Fertilizer Recommendations:
-- Soil fertility profiles for maize zones.
-- Split applications of nitrogen.
-- Micronutrients needed for optimal harvest.
-
-5. Water Management:
-- Irrigation scheduling for minimizing stress.
-- Effect of drought stress on pest susceptibility.
-
-6. Post-harvest Management:
-- Grain drying, storage conditions, and pest prevention.
-
-... (Detailed appendices with case studies, pest lifecycle charts, regional adaptation guides)
-
+1. Stem Borer: Destroy crop residues to break lifecycle. Use parasitoids (Cotesia flavipes).
+2. Leaf Blight: Managed through resistant hybrids and seed treatment.
+3. Earworm: Monitored with pheromone traps; use Bacillus thuringiensis products.
 """,
-            "source": "NCIPM Publications, Agricultural Research Journals",
+            "source": "NCIPM Publications",
             "category": "integrated_pest_management",
             "crop": "maize"
-        },
-        {
-            "title": "Wheat Disease and Crop Management Comprehensive Guide",
-            "content": """
-Wheat Crop Agronomy and Protection:
-1. Rust Diseases:
-- Stem rust, Leaf rust, Stripe rust detailed pathogenesis.
-- Resistant cultivar development.
-- Surveillance and prediction models for rust epidemics.
-- Fungicide program suggestions.
-
-2. Powdery Mildew and Spot Blotch:
-- Recognizing symptoms and differentiating diseases.
-- Integrated management including varietal resistance and fungicide protocols.
-
-3. Pest Management:
-- Aphids, Armyworm biology and control.
-- Use of pheromone traps and natural enemy augmentation.
-
-4. Crop Nutrition:
-- Macro and micronutrient balance.
-- Foliar feeding and soil amendment techniques.
-
-5. Harvest and Post-Harvest:
-- Timely harvest to avoid shattering.
-- Grain storage best practices to minimize losses.
-
-6. Conservation Agriculture Practices:
-- Tillage reduction, crop residue retention.
-- Benefits in pest and disease suppression.
-
-... (Long-term soil health guidelines, climate adaptation strategies, seed treatment protocols)
-
-""",
-            "source": "Wheat Research Council, Punjab Agriculture University, FAO",
-            "category": "crop_management",
-            "crop": "wheat"
-        },
-        {
-            "title": "General Principles of Integrated Pest Management (IPM)",
-            "content": """
-IPM: Principles and Practices
-- Introduction to IPM: Definition and importance in sustainable agriculture.
-- Pest identification and monitoring techniques.
-- Detailed explanation of Economic Threshold Levels (ETL).
-- Cultural methods: crop rotation, trap crops, intercropping.
-- Biological control agents: predators, parasitoids, pathogens with lifecycle illustrations.
-- Chemical controls: usage guidelines to avoid resistance, safe application techniques.
-- Farm safety and environmental protection practices.
-- Farmer Field Schools and participatory training methods.
-- Case studies on successful IPM implementation across regions and crops.
-- Advances in IPM: Use of pheromones, biotechnologies, remote sensing.
-
-... (Additional sections on legislation, pesticide registration, market access impacts)
-
-""",
-            "source": "FAO, National IPM Programs, IPM Global Initiative",
-            "category": "general_management",
-            "crop": "all"
         }
-        # Add more crops, pest species, soil health, nutrients, climate resilience etc., to reach 1000+ lines
+        # You can add more entries here to reach your 1000+ line goal
     ]
     return knowledge_base
 
 
 # ==============================================================================
-# PART 2: RAG AND AGENT SYSTEM (Simplified for Google Gemini)
+# PART 2: RAG SYSTEM (OpenAI Version)
 # ==============================================================================
 class FarmAISystem:
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.qa_chain = None
-        self.text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        # Splitter to break long text into chunks for better retrieval accuracy
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000, 
+            chunk_overlap=150
+        )
 
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         try:
-            # Use Google's embedding model
-            embeddings = GoogleGenerativeAIEmbeddings(
-                model="models/embedding-001",
-                google_api_key=self.api_key
+            # Use OpenAI Embeddings
+            embeddings = OpenAIEmbeddings(openai_api_key=self.api_key)
+
+            # Convert dicts to LangChain Document objects
+            langchain_docs = [
+                Document(page_content=doc['content'], metadata={'title': doc.get('title', '')}) 
+                for doc in documents
+            ]
+
+            # Split large documents into smaller chunks
+            final_docs = self.text_splitter.split_documents(langchain_docs)
+
+            # Create FAISS vectorstore
+            vectorstore = FAISS.from_documents(final_docs, embeddings)
+
+            # Initialize OpenAI LLM (gpt-4o-mini is cost-effective and fast)
+            llm = ChatOpenAI(
+                model="gpt-4o-mini",
+                temperature=0,
+                openai_api_key=self.api_key
             )
 
-            langchain_docs = [Document(page_content=doc['content'], metadata={'title': doc.get('title', '')}) for doc in documents]
-            vectorstore = FAISS.from_documents(langchain_docs, embeddings)
-
-            # Use Google's Gemini Pro model
-            llm = ChatGoogleGenerativeAI(
-                model="gemini-1.5-flash-latest",
-                temperature=0.1,
-                google_api_key=self.api_key
-            )
-
+            # Setup the Retrieval Chain
             self.qa_chain = RetrievalQA.from_chain_type(
-                llm=llm, chain_type="stuff", retriever=vectorstore.as_retriever()
+                llm=llm, 
+                chain_type="stuff", 
+                retriever=vectorstore.as_retriever(search_kwargs={"k": 3})
             )
             return True
         except Exception as e:
@@ -260,24 +119,28 @@ class FarmAISystem:
         if not self.qa_chain:
             return "The system is not ready. Please check the logs."
         try:
-            result = self.qa_chain.invoke(question)
-            return result.get('result', "Sorry, I couldn't find an answer.")
+            # Invoke the chain
+            response = self.qa_chain.invoke({"query": question})
+            return response.get('result', "I'm sorry, I couldn't find a specific answer for that.")
         except Exception as e:
-            return f"An error occurred: {e}"
+            return f"An error occurred during query: {e}"
 
 # ==============================================================================
 # PART 3: MAIN STREAMLIT APP
 # ==============================================================================
 st.set_page_config(page_title="FarmAI Knowledge Assistant", page_icon="🌾", layout="wide")
+
 st.markdown('<h1 style="text-align: center; color: #2E8B57;">🌾 FarmAI Knowledge Assistant</h1>', unsafe_allow_html=True)
+st.markdown('<p style="text-align: center;">Powered by OpenAI & LangChain</p>', unsafe_allow_html=True)
 
 @st.cache_resource
 def initialize_system():
-    """Load data and build the RAG system."""
-    # Use the new GOOGLE_API_KEY secret
-    api_key = st.secrets.get("GOOGLE_API_KEY")
+    """Load data and build the RAG system using OpenAI Secrets."""
+    # Ensure you have 'OPENAI_API_KEY' in your Streamlit Secrets
+    api_key = st.secrets.get("OPENAI_API_KEY")
 
     if not api_key:
+        st.warning("Please add your 'OPENAI_API_KEY' to Streamlit Secrets.")
         return None, False
 
     documents = load_agricultural_data()
@@ -286,28 +149,34 @@ def initialize_system():
 
     return farm_ai_system, success
 
+# Initialize the system
 farm_ai, success = initialize_system()
 
-if not success:
-    st.error("Failed to initialize the FarmAI system. Please ensure your Google API key is correct in Streamlit Secrets and refresh the page.")
-else:
-    st.success("✅ FarmAI system initialized successfully!")
-
+if success:
+    st.sidebar.success("✅ Knowledge Base Loaded")
+    
+    # Initialize chat history
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I help with your farming questions today?"}]
+        st.session_state.messages = [
+            {"role": "assistant", "content": "Hello! I am FarmAI. Ask me anything about tomato, rice, or maize management."}
+        ]
 
+    # Display chat messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    if prompt := st.chat_input("Ask about agriculture..."):
+    # Handle User Input
+    if prompt := st.chat_input("Ex: How do I manage Tomato Blight?"):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("FarmAI is thinking..."):
+            with st.spinner("Analyzing knowledge base..."):
                 response = farm_ai.query(prompt)
                 st.markdown(response)
 
         st.session_state.messages.append({"role": "assistant", "content": response})
+else:
+    st.error("System failed to initialize. Check your API key and dependencies.")
