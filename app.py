@@ -6,16 +6,12 @@ import nest_asyncio
 # Apply the patch for the event loop issue
 nest_asyncio.apply()
 
-# MODULAR IMPORTS for Google Gemini & LangChain v0.3
+# MODULAR IMPORTS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-# These come from the classic package in v0.3
 from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
-
-# Core components
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 
@@ -23,7 +19,6 @@ from langchain_core.documents import Document
 # PART 1: DATA LOADER CODE
 # ==============================================================================
 def load_agricultural_data() -> List[Dict[str, Any]]:
-    """Knowledge base containing detailed agricultural data."""
     return [
         {
             "title": "Tomato Disease and Pest Management",
@@ -52,9 +47,9 @@ class FarmAISystem:
 
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         try:
-            # Using Google's Embedding Model
+            # FIX: Using the latest stable embedding model
             embeddings = GoogleGenerativeAIEmbeddings(
-                model="models/embedding-001",
+                model="models/text-embedding-004",
                 google_api_key=self.api_key
             )
             
@@ -67,7 +62,7 @@ class FarmAISystem:
             vectorstore = FAISS.from_documents(final_docs, embeddings)
             retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-            # Using Google's Gemini Model
+            # Using Gemini 1.5 Flash
             llm = ChatGoogleGenerativeAI(
                 model="gemini-1.5-flash",
                 google_api_key=self.api_key,
@@ -98,7 +93,6 @@ class FarmAISystem:
         if not self.rag_chain:
             return "The system is not ready."
         try:
-            # Modern chain uses 'input' and returns 'answer'
             response = self.rag_chain.invoke({"input": question})
             return response.get('answer', "I couldn't find an answer.")
         except Exception as e:
@@ -112,7 +106,7 @@ st.title("🌾 FarmAI Knowledge Assistant")
 
 @st.cache_resource
 def initialize_system():
-    # Back to Google API Key
+    # Ensure this matches exactly what is in your Streamlit Cloud Secrets
     api_key = st.secrets.get("GOOGLE_API_KEY")
     if not api_key:
         return None, False
@@ -126,7 +120,7 @@ farm_ai, success = initialize_system()
 
 if success:
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "Hello! I'm back on Google Gemini. How can I help with your crops today?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "Welcome! I'm running on Google Gemini. Ask me about your crops."}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -138,9 +132,9 @@ if success:
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Checking agricultural database..."):
+            with st.spinner("Searching agricultural database..."):
                 response = farm_ai.query(prompt)
                 st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
 else:
-    st.error("Missing Google API Key. Please add 'GOOGLE_API_KEY' to your Streamlit Secrets.")
+    st.error("Missing Google API Key. Please check your Streamlit Secrets.")
