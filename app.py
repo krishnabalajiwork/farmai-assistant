@@ -11,9 +11,9 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGener
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-# FIXED: Absolute direct path for v0.3 compatibility
-from langchain.chains.retrieval import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+# FIX: Using the Classic bridge to solve the ModuleNotFoundError
+from langchain_classic.chains import create_retrieval_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
@@ -22,7 +22,6 @@ from langchain_core.documents import Document
 # PART 1: DATA LOADER CODE
 # ==============================================================================
 def load_agricultural_data() -> List[Dict[str, Any]]:
-    """Knowledge base containing detailed agricultural data."""
     return [
         {
             "title": "Tomato Disease and Pest Management",
@@ -82,13 +81,13 @@ class FarmAISystem:
                 ("human", "{input}"),
             ])
 
-            # Building the chain with the new imports
+            # Building the chain using the CLASSIC bridge
             question_answer_chain = create_stuff_documents_chain(llm, prompt)
             self.rag_chain = create_retrieval_chain(retriever, question_answer_chain)
             
             return True
         except Exception as e:
-            st.error(f"Error building knowledge base: {e}")
+            st.error(f"Critical Error: {e}")
             return False
 
     def query(self, question: str):
@@ -103,7 +102,7 @@ class FarmAISystem:
 # ==============================================================================
 # PART 3: MAIN STREAMLIT APP
 # ==============================================================================
-st.set_page_config(page_title="FarmAI Knowledge Assistant", page_icon="🌾", layout="wide")
+st.set_page_config(page_title="FarmAI Knowledge Assistant", page_icon="🌾")
 st.title("🌾 FarmAI Knowledge Assistant")
 
 @st.cache_resource
@@ -121,7 +120,7 @@ farm_ai, success = initialize_system()
 
 if success:
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "System initialized. How can I help with your farming queries?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "How can I help with your crops today?"}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -133,7 +132,7 @@ if success:
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Searching..."):
+            with st.spinner("Analyzing..."):
                 response = farm_ai.query(prompt)
                 st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
