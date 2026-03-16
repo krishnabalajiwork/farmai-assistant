@@ -6,7 +6,7 @@ import nest_asyncio
 # Apply the patch for the event loop issue
 nest_asyncio.apply()
 
-# Updated Imports to fix the ImportError and use modern LCEL chains
+# MODERN IMPORTS: No more RetrievalQA
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -20,32 +20,22 @@ from langchain.docstore.document import Document
 # ==============================================================================
 def load_agricultural_data() -> List[Dict[str, Any]]:
     """Knowledge base containing detailed agricultural data."""
-    knowledge_base = [
+    return [
         {
             "title": "Tomato Disease and Pest Management",
-            "content": """
-Tomato Disease Management:
-1. Tomato Blight (Early and Late): Early blight shows brown spots; late blight causes dark water-soaked lesions.
-2. Tomato Mosaic Virus: Mottled leaf patterns and stunting. Control via hygiene and aphid management.
-""",
+            "content": "Tomato Blight (Early and Late): Early blight shows brown spots; late blight causes dark water-soaked lesions. Control via hygiene and aphid management.",
             "source": "Extension Publications",
             "category": "disease_management",
             "crop": "tomato"
         },
         {
             "title": "Rice Crop Pest and Disease Management",
-            "content": """
-Rice Management:
-1. Stem Borer: Use pheromone traps and resistant varieties like 'Swarna'.
-2. Blast Disease: Manage through nitrogen timing and water control.
-""",
+            "content": "Rice Management: Stem Borer: Use pheromone traps and resistant varieties. Blast Disease: Manage through nitrogen timing and water control.",
             "source": "IRRI",
             "category": "crop_management",
             "crop": "rice"
         }
     ]
-    return knowledge_base
-
 
 # ==============================================================================
 # PART 2: RAG SYSTEM (Modern OpenAI Version)
@@ -71,12 +61,12 @@ class FarmAISystem:
 
             llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, openai_api_key=self.api_key)
 
-            # Modern RAG Chain Construction
+            # Define the prompt for the "combine documents" part of the chain
             system_prompt = (
                 "You are an expert agricultural assistant. Use the following pieces of "
                 "retrieved context to answer the question. If you don't know the answer, "
                 "say that you don't know. Use three sentences maximum and keep the "
-                "answer concise.\n\n{context}"
+                "answer concise.\n\nContext: {context}"
             )
             
             prompt = ChatPromptTemplate.from_messages([
@@ -84,7 +74,7 @@ class FarmAISystem:
                 ("human", "{input}"),
             ])
 
-            # Create the chain that combines documents and the retrieval chain
+            # Modern RAG construction
             question_answer_chain = create_stuff_documents_chain(llm, prompt)
             self.rag_chain = create_retrieval_chain(retriever, question_answer_chain)
             
@@ -95,11 +85,11 @@ class FarmAISystem:
 
     def query(self, question: str):
         if not self.rag_chain:
-            return "The system is not ready. Please check the logs."
+            return "The system is not ready."
         try:
-            # The modern chain uses 'input' as the key and returns 'answer'
+            # Modern chain uses 'input' and returns 'answer'
             response = self.rag_chain.invoke({"input": question})
-            return response.get('answer', "I'm sorry, I couldn't find an answer.")
+            return response.get('answer', "I couldn't find an answer.")
         except Exception as e:
             return f"An error occurred: {e}"
 
@@ -107,14 +97,13 @@ class FarmAISystem:
 # PART 3: MAIN STREAMLIT APP
 # ==============================================================================
 st.set_page_config(page_title="FarmAI Knowledge Assistant", page_icon="🌾", layout="wide")
-st.markdown('<h1 style="text-align: center; color: #2E8B57;">🌾 FarmAI Knowledge Assistant</h1>', unsafe_allow_html=True)
+st.title("🌾 FarmAI Knowledge Assistant")
 
 @st.cache_resource
 def initialize_system():
     api_key = st.secrets.get("OPENAI_API_KEY")
     if not api_key:
         return None, False
-
     documents = load_agricultural_data()
     farm_ai_system = FarmAISystem(api_key=api_key)
     success = farm_ai_system.build_knowledge_base(documents)
@@ -124,7 +113,7 @@ farm_ai, success = initialize_system()
 
 if success:
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "How can I help with your farming questions?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "How can I help you today?"}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -139,7 +128,6 @@ if success:
             with st.spinner("Analyzing..."):
                 response = farm_ai.query(prompt)
                 st.markdown(response)
-
         st.session_state.messages.append({"role": "assistant", "content": response})
 else:
-    st.error("System failed to initialize. Check your OPENAI_API_KEY in Secrets.")
+    st.error("Please add your 'OPENAI_API_KEY' to Streamlit Secrets.")
