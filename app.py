@@ -11,7 +11,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGener
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-# FIX: Using the Classic bridge for v0.3 compatibility
+# Using the Classic bridge for v0.3 compatibility
 from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 
@@ -22,7 +22,6 @@ from langchain_core.documents import Document
 # PART 1: DATA LOADER CODE
 # ==============================================================================
 def load_agricultural_data() -> List[Dict[str, Any]]:
-    """Knowledge base containing detailed agricultural data."""
     return [
         {
             "title": "Tomato Disease and Pest Management",
@@ -51,9 +50,9 @@ class FarmAISystem:
 
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         try:
-            # Using the stable embedding model
+            # FIX: Updated to the newest stable embedding model
             embeddings = GoogleGenerativeAIEmbeddings(
-                model="models/embedding-001", 
+                model="models/text-embedding-004", 
                 google_api_key=self.api_key
             )
             
@@ -74,9 +73,7 @@ class FarmAISystem:
 
             system_prompt = (
                 "You are an expert agricultural assistant. Use the following pieces of "
-                "retrieved context to answer the question. If you don't know the answer, "
-                "say that you don't know. Use three sentences maximum and keep the "
-                "answer concise.\n\nContext: {context}"
+                "retrieved context to answer the question.\n\nContext: {context}"
             )
             
             prompt = ChatPromptTemplate.from_messages([
@@ -84,13 +81,12 @@ class FarmAISystem:
                 ("human", "{input}"),
             ])
 
-            # Modern RAG chain construction
             question_answer_chain = create_stuff_documents_chain(llm, prompt)
             self.rag_chain = create_retrieval_chain(retriever, question_answer_chain)
             
             return True
         except Exception as e:
-            st.error(f"Critical Error: {e}")
+            st.error(f"Critical Error building knowledge base: {e}")
             return False
 
     def query(self, question: str):
@@ -105,7 +101,7 @@ class FarmAISystem:
 # ==============================================================================
 # PART 3: MAIN STREAMLIT APP
 # ==============================================================================
-st.set_page_config(page_title="FarmAI Knowledge Assistant", page_icon="🌾", layout="wide")
+st.set_page_config(page_title="FarmAI Knowledge Assistant", page_icon="🌾")
 st.title("🌾 FarmAI Knowledge Assistant")
 
 @st.cache_resource
@@ -123,7 +119,7 @@ farm_ai, success = initialize_system()
 
 if success:
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "Welcome! I am ready to help with your farming questions."}]
+        st.session_state.messages = [{"role": "assistant", "content": "How can I help with your crops today?"}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -135,7 +131,7 @@ if success:
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Searching knowledge base..."):
+            with st.spinner("Analyzing..."):
                 response = farm_ai.query(prompt)
                 st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
