@@ -16,7 +16,7 @@ from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.docstore.document import Document Document
+from langchain.docstore.document import Document
 
 # ==============================================================================
 # PART 1: DATA LOADER CODE
@@ -64,7 +64,6 @@ class FarmAISystem:
 
             llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, openai_api_key=self.api_key)
 
-            # Define the prompt for the "combine documents" part of the chain
             system_prompt = (
                 "You are an expert agricultural assistant. Use the following pieces of "
                 "retrieved context to answer the question. If you don't know the answer, "
@@ -77,7 +76,6 @@ class FarmAISystem:
                 ("human", "{input}"),
             ])
 
-            # Modern RAG construction
             question_answer_chain = create_stuff_documents_chain(llm, prompt)
             self.rag_chain = create_retrieval_chain(retriever, question_answer_chain)
             
@@ -90,7 +88,6 @@ class FarmAISystem:
         if not self.rag_chain:
             return "The system is not ready."
         try:
-            # Modern chain uses 'input' and returns 'answer'
             response = self.rag_chain.invoke({"input": question})
             return response.get('answer', "I couldn't find an answer.")
         except Exception as e:
@@ -133,4 +130,4 @@ if success:
                 st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
 else:
-    st.error("Please add your 'OPENAI_API_KEY' to Streamlit Secrets.")
+    st.error("Please ensure 'OPENAI_API_KEY' is in Streamlit Secrets and 'langchain-classic' is in requirements.txt.")
