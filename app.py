@@ -15,10 +15,11 @@ if not api_key:
     st.error("Missing API Key! Please add 'GOOGLE_API_KEY' to your Streamlit Secrets.")
 else:
     try:
-        # THE FIX IS HERE: Changed to models/embedding-001
+        # THE FIX: No 'models/' prefix + task_type added
         embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/embedding-001", 
-            google_api_key=api_key
+            model="text-embedding-004", 
+            google_api_key=api_key,
+            task_type="retrieval_query"
         )
         
         llm = ChatGoogleGenerativeAI(
