@@ -6,14 +6,17 @@ import nest_asyncio
 # Apply the patch for the event loop issue
 nest_asyncio.apply()
 
-# MODERN IMPORTS: No more RetrievalQA
+# MODULAR IMPORTS
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+
+# These now come from the classic/legacy package in v0.3
+from langchain_classic.chains import create_retrieval_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.docstore.document import Document
+from langchain.docstore.document import Document Document
 
 # ==============================================================================
 # PART 1: DATA LOADER CODE
