@@ -19,6 +19,7 @@ from langchain_core.documents import Document
 # PART 1: DATA LOADER CODE
 # ==============================================================================
 def load_agricultural_data() -> List[Dict[str, Any]]:
+    """Knowledge base containing detailed agricultural data."""
     return [
         {
             "title": "Tomato Disease and Pest Management",
@@ -47,9 +48,9 @@ class FarmAISystem:
 
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         try:
-            # FIX: Using the latest stable embedding model
+            # FIX: Using 'models/text-embedding-004' with the stable v1 API path
             embeddings = GoogleGenerativeAIEmbeddings(
-                model="models/text-embedding-004",
+                model="models/text-embedding-004", 
                 google_api_key=self.api_key
             )
             
@@ -62,7 +63,6 @@ class FarmAISystem:
             vectorstore = FAISS.from_documents(final_docs, embeddings)
             retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-            # Using Gemini 1.5 Flash
             llm = ChatGoogleGenerativeAI(
                 model="gemini-1.5-flash",
                 google_api_key=self.api_key,
@@ -86,8 +86,20 @@ class FarmAISystem:
             
             return True
         except Exception as e:
-            st.error(f"Error building knowledge base: {e}")
-            return False
+            # If text-embedding-004 still fails, we try the newest fallback
+            st.warning("Primary model failed, attempting fallback model...")
+            try:
+                embeddings = GoogleGenerativeAIEmbeddings(
+                    model="models/gemini-embedding-001", 
+                    google_api_key=self.api_key
+                )
+                vectorstore = FAISS.from_documents(final_docs, embeddings)
+                retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+                self.rag_chain = create_retrieval_chain(retriever, question_answer_chain)
+                return True
+            except:
+                st.error(f"Critical Error building knowledge base: {e}")
+                return False
 
     def query(self, question: str):
         if not self.rag_chain:
@@ -106,7 +118,6 @@ st.title("🌾 FarmAI Knowledge Assistant")
 
 @st.cache_resource
 def initialize_system():
-    # Ensure this matches exactly what is in your Streamlit Cloud Secrets
     api_key = st.secrets.get("GOOGLE_API_KEY")
     if not api_key:
         return None, False
@@ -120,7 +131,7 @@ farm_ai, success = initialize_system()
 
 if success:
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "Welcome! I'm running on Google Gemini. Ask me about your crops."}]
+        st.session_state.messages = [{"role": "assistant", "content": "How can I help with your crops today?"}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -132,9 +143,9 @@ if success:
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Searching agricultural database..."):
+            with st.spinner("Analyzing..."):
                 response = farm_ai.query(prompt)
                 st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
 else:
-    st.error("Missing Google API Key. Please check your Streamlit Secrets.")
+    st.error("Please ensure your 'GOOGLE_API_KEY' is valid in Streamlit Secrets.")
