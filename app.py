@@ -6,12 +6,12 @@ import nest_asyncio
 # Apply the patch for the event loop issue
 nest_asyncio.apply()
 
-# MODULAR IMPORTS (LangChain v0.3 compatible)
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+# MODULAR IMPORTS for Google Gemini & LangChain v0.3
+from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-# These now come from the classic package in v0.3
+# These come from the classic package in v0.3
 from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 
@@ -42,7 +42,7 @@ def load_agricultural_data() -> List[Dict[str, Any]]:
     ]
 
 # ==============================================================================
-# PART 2: RAG SYSTEM (OpenRouter Compatible)
+# PART 2: RAG SYSTEM (Google Gemini Version)
 # ==============================================================================
 class FarmAISystem:
     def __init__(self, api_key: str):
@@ -52,11 +52,10 @@ class FarmAISystem:
 
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         try:
-            # FIX: Use OpenRouter for Embeddings too
-            embeddings = OpenAIEmbeddings(
-                model="openai/text-embedding-3-small", 
-                openai_api_key=self.api_key,
-                base_url="https://openrouter.ai/api/v1"
+            # Using Google's Embedding Model
+            embeddings = GoogleGenerativeAIEmbeddings(
+                model="models/embedding-001",
+                google_api_key=self.api_key
             )
             
             langchain_docs = [
@@ -68,15 +67,10 @@ class FarmAISystem:
             vectorstore = FAISS.from_documents(final_docs, embeddings)
             retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-            # FIX: Use OpenRouter for the Chat Model
-            llm = ChatOpenAI(
-                model="google/gemini-2.0-flash-001", # You can use any model available on OpenRouter
-                openai_api_key=self.api_key,
-                base_url="https://openrouter.ai/api/v1",
-                default_headers={
-                    "HTTP-Referer": "https://farmai-assistant.streamlit.app/",
-                    "X-Title": "FarmAI Assistant",
-                },
+            # Using Google's Gemini Model
+            llm = ChatGoogleGenerativeAI(
+                model="gemini-1.5-flash",
+                google_api_key=self.api_key,
                 temperature=0
             )
 
@@ -104,6 +98,7 @@ class FarmAISystem:
         if not self.rag_chain:
             return "The system is not ready."
         try:
+            # Modern chain uses 'input' and returns 'answer'
             response = self.rag_chain.invoke({"input": question})
             return response.get('answer', "I couldn't find an answer.")
         except Exception as e:
@@ -117,8 +112,8 @@ st.title("🌾 FarmAI Knowledge Assistant")
 
 @st.cache_resource
 def initialize_system():
-    # Make sure your secret in Streamlit dashboard is named 'OPENROUTER_API_KEY'
-    api_key = st.secrets.get("OPENROUTER_API_KEY")
+    # Back to Google API Key
+    api_key = st.secrets.get("GOOGLE_API_KEY")
     if not api_key:
         return None, False
     
@@ -131,7 +126,7 @@ farm_ai, success = initialize_system()
 
 if success:
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "How can I help you with your crops today?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "Hello! I'm back on Google Gemini. How can I help with your crops today?"}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -143,9 +138,9 @@ if success:
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("FarmAI is checking the database..."):
+            with st.spinner("Checking agricultural database..."):
                 response = farm_ai.query(prompt)
                 st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
 else:
-    st.error("Missing API Key. Please add 'OPENROUTER_API_KEY' to your Streamlit Secrets.")
+    st.error("Missing Google API Key. Please add 'GOOGLE_API_KEY' to your Streamlit Secrets.")
