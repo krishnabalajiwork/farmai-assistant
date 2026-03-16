@@ -11,7 +11,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGener
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-# Using the Classic bridge for v0.3 compatibility
+# Using the Classic bridge for v0.3 stability
 from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 
@@ -50,9 +50,9 @@ class FarmAISystem:
 
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         try:
-            # FIX: Updated to the newest stable embedding model
+            # STABLE FIX: Back to embedding-001, the most widely supported model
             embeddings = GoogleGenerativeAIEmbeddings(
-                model="models/text-embedding-004", 
+                model="models/embedding-001", 
                 google_api_key=self.api_key
             )
             
@@ -72,8 +72,8 @@ class FarmAISystem:
             )
 
             system_prompt = (
-                "You are an expert agricultural assistant. Use the following pieces of "
-                "retrieved context to answer the question.\n\nContext: {context}"
+                "You are an expert agricultural assistant. Use the following context "
+                "to answer the question.\n\nContext: {context}"
             )
             
             prompt = ChatPromptTemplate.from_messages([
@@ -86,7 +86,7 @@ class FarmAISystem:
             
             return True
         except Exception as e:
-            st.error(f"Critical Error building knowledge base: {e}")
+            st.error(f"Error: {e}")
             return False
 
     def query(self, question: str):
@@ -136,4 +136,4 @@ if success:
                 st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
 else:
-    st.error("Please ensure 'GOOGLE_API_KEY' is valid in Streamlit Secrets.")
+    st.error("Invalid GOOGLE_API_KEY. Please check your Secrets.")
