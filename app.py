@@ -5,7 +5,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 
-# Fix for Streamlit's async environment
+# Required for Streamlit's async environment
 nest_asyncio.apply()
 
 st.set_page_config(page_title="FarmAI Grounded Assistant", page_icon="🌾")
@@ -26,7 +26,7 @@ api_key = st.secrets.get("GOOGLE_API_KEY")
 
 if api_key:
     try:
-        # CONFIGURE DIRECT GOOGLE SDK (Forces v1 stable path)
+        # CONFIGURE DIRECT GOOGLE SDK (Forces stable production path)
         genai.configure(api_key=api_key)
         
         # 2. SET UP STABLE EMBEDDINGS
@@ -40,7 +40,7 @@ if api_key:
         vectorstore = FAISS.from_documents(load_manual_data(), embeddings)
         st.success("✅ Grounded Knowledge Base Active!")
 
-        # Chat UI
+        # Chat UI Setup
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
@@ -59,8 +59,7 @@ if api_key:
 
             with st.chat_message("assistant"):
                 with st.spinner("Searching manual..."):
-                    # 3. GENERATION: Direct SDK Call (Bypasses the LangChain 404 issue)
-                    # We use 'gemini-1.5-flash' which is the stable production ID
+                    # 3. GENERATION: Direct SDK Call (Bypasses the LangChain v1beta issue)
                     model = genai.GenerativeModel('gemini-1.5-flash')
                     
                     prompt = f"""You are a specialized Agricultural Assistant. 
@@ -80,6 +79,6 @@ if api_key:
 
     except Exception as e:
         st.error(f"System Error: {e}")
-        st.info("If 404 persists, ensure you have clicked REBOOT in the Streamlit Dashboard.")
+        st.info("If errors persist, please REBOOT the app in the Streamlit Dashboard.")
 else:
     st.warning("Please add GOOGLE_API_KEY to Streamlit Secrets.")
