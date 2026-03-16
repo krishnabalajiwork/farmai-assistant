@@ -1,6 +1,6 @@
 streamlit
-google-generativeai
-langchain-google-genai
+langchain
+langchain-openai
 langchain-community
 faiss-cpu
 nest-asyncio
