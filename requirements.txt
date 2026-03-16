@@ -1,6 +1,8 @@
 streamlit
 langchain
-faiss-cpu
-langchain-google-genai
+langchain-openai
 langchain-community
+langchain-text-splitters
+faiss-cpu
+openai
 nest-asyncio
