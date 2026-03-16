@@ -1,7 +1,8 @@
 streamlit
+langchain>=0.3.0
 langchain-google-genai
 langchain-community
 langchain-text-splitters
-langchain
+langchain-core
 faiss-cpu
 nest-asyncio
