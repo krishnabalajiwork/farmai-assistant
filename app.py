@@ -22,13 +22,14 @@ else:
             google_api_key=api_key,
             task_type="retrieval_query" 
         )
-        
+
         llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash", 
+            model="gemini-1.5-flash-latest", 
             google_api_key=api_key,
             temperature=0.3
         )
 
+        
         knowledge_base_data = [
             Document(page_content="Tomato Blight: Identified by brown spots with yellow halos. Management: Ensure air circulation and use copper-based fungicides."),
             Document(page_content="Rice Stem Borer: Larvae cause 'dead heart' in young plants. Management: Use pheromone traps and avoid excessive nitrogen."),
