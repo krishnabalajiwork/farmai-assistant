@@ -6,12 +6,15 @@ import nest_asyncio
 # Apply the patch for the event loop issue
 nest_asyncio.apply()
 
-# STABLE IMPORTS
+# MODULAR IMPORTS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain.chains import create_retrieval_chain
+
+# FIX: Modern imports for v0.3
+from langchain.chains.retrieval import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
+
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 
@@ -48,7 +51,7 @@ class FarmAISystem:
 
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         try:
-            # FIX: Using the most universally available embedding model
+            # Using the stable embedding model
             embeddings = GoogleGenerativeAIEmbeddings(
                 model="models/embedding-001", 
                 google_api_key=self.api_key
@@ -81,6 +84,7 @@ class FarmAISystem:
                 ("human", "{input}"),
             ])
 
+            # Building the chain
             question_answer_chain = create_stuff_documents_chain(llm, prompt)
             self.rag_chain = create_retrieval_chain(retriever, question_answer_chain)
             
@@ -119,7 +123,7 @@ farm_ai, success = initialize_system()
 
 if success:
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I help with your crops today?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "System ready! How can I help with your crops?"}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
