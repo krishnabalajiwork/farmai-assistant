@@ -11,8 +11,8 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGener
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-# FIX: Modern imports for v0.3
-from langchain.chains.retrieval import create_retrieval_chain
+# FIXED: Direct paths for v0.3 modular structure
+from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 
 from langchain_core.prompts import ChatPromptTemplate
@@ -84,7 +84,7 @@ class FarmAISystem:
                 ("human", "{input}"),
             ])
 
-            # Building the chain
+            # Modern RAG chain construction
             question_answer_chain = create_stuff_documents_chain(llm, prompt)
             self.rag_chain = create_retrieval_chain(retriever, question_answer_chain)
             
@@ -123,7 +123,7 @@ farm_ai, success = initialize_system()
 
 if success:
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "System ready! How can I help with your crops?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "Welcome! I am ready to help with your farming questions."}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -135,9 +135,9 @@ if success:
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Analyzing..."):
+            with st.spinner("Searching knowledge base..."):
                 response = farm_ai.query(prompt)
                 st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
 else:
-    st.error("Please ensure your 'GOOGLE_API_KEY' is valid in Streamlit Secrets.")
+    st.error("Please ensure 'GOOGLE_API_KEY' is valid in Streamlit Secrets.")
