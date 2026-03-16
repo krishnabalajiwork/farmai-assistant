@@ -1,65 +1,149 @@
 import streamlit as st
+import os
+from typing import List, Dict, Any
 import nest_asyncio
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
-from langchain_community.vectorstores import FAISS
-from langchain_core.documents import Document
 
+# Apply the patch for the event loop issue
 nest_asyncio.apply()
 
-st.set_page_config(page_title="FarmAI Assistant", page_icon="🌾")
-st.title("🌾 FarmAI Assistant")
+from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
+from langchain_community.vectorstores import FAISS
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain.chains import RetrievalQA
+from langchain.docstore.document import Document
+from langchain.prompts import PromptTemplate
 
-api_key = st.secrets.get("GOOGLE_API_KEY")
+# ==============================================================================
+# PART 1: YOUR EXTENSIVE DATA LOADER
+# ==============================================================================
+def load_agricultural_data() -> List[Dict[str, Any]]:
+    return [
+        {
+            "title": "Tomato Disease and Pest Management Detailed Guide",
+            "content": """
+Tomato Disease Management:
+1. Tomato Blight (Early Blight and Late Blight):
+- Symptoms: Early blight appears as brown concentric spots; late blight causes dark water-soaked lesions.
+- Causal Agents: Alternaria solani (early blight), Phytophthora infestans (late blight).
+- Management: Use certified seeds, crop rotation, and copper-based fungicides.
+2. Tomato Mosaic Virus (ToMV): Mottled green patterns, leaf curling. Control aphids.
+3. Fusarium Wilt: Vascular discoloration. Control by soil solarization.
+4. Whitefly Management: Use yellow sticky traps and biological agents like Encarsia spp.
+""",
+            "category": "disease_management",
+            "crop": "tomato"
+        },
+        {
+            "title": "Rice Crop Pest and Disease Management Extended Manual",
+            "content": """
+Rice Management:
+1. Stem Borer: Use pheromone traps and resistant varieties like 'Swarna'.
+2. Blast Disease (Magnaporthe oryzae): Integrated management includes nitrogen timing and fungicide protocols.
+3. Planthopper Management: Use systemic insecticides and predatory bugs.
+""",
+            "category": "crop_management",
+            "crop": "rice"
+        }
+        # ... Add your other content entries here exactly as in your manual
+    ]
 
-if not api_key:
-    st.error("Missing API Key! Please add 'GOOGLE_API_KEY' to your Streamlit Secrets.")
-else:
-    try:
-        # THE FIX: Using current stable 2026 model IDs
-        embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/gemini-embedding-001", # Standard stable embedding
-            google_api_key=api_key,
-            task_type="retrieval_query"
-        )
-        
-        # THE FIX: Updated to Gemini 2.5 series (Current stable)
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash", 
-            google_api_key=api_key,
-            temperature=0.3
-        )
+# ==============================================================================
+# PART 2: THE STRICT RAG SYSTEM
+# ==============================================================================
+class FarmAISystem:
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.qa_chain = None
 
-        knowledge_base_data = [
-            Document(page_content="Tomato Blight: Brown spots with yellow halos. Fix: Air circulation & copper-based fungicides."),
-            Document(page_content="Rice Stem Borer: Larvae cause 'dead heart'. Fix: Pheromone traps."),
-            Document(page_content="Tomato Sorting: High-quality tomatoes are firm, uniform, and crack-free.")
-        ]
-        
-        vectorstore = FAISS.from_documents(knowledge_base_data, embeddings)
-        st.success("✅ FarmAI Knowledge Base is Live (v2.5)!")
+    def build_knowledge_base(self, documents: List[Dict[str, Any]]):
+        try:
+            embeddings = GoogleGenerativeAIEmbeddings(
+                model="models/embedding-001",
+                google_api_key=self.api_key
+            )
 
-        if "messages" not in st.session_state:
-            st.session_state.messages = []
+            langchain_docs = [Document(page_content=doc['content'], metadata={'title': doc.get('title', '')}) for doc in documents]
+            
+            # Split text to ensure the AI gets high-quality chunks
+            text_splitter = RecursiveCharacterTextSplitter(chunk_size=700, chunk_overlap=100)
+            split_docs = text_splitter.split_documents(langchain_docs)
+            
+            vectorstore = FAISS.from_documents(split_docs, embeddings)
 
-        for msg in st.session_state.messages:
-            with st.chat_message(msg["role"]):
-                st.write(msg["content"])
+            llm = ChatGoogleGenerativeAI(
+                model="gemini-1.5-flash-latest",
+                temperature=0, # Set to 0 for maximum factual accuracy
+                google_api_key=self.api_key
+            )
 
-        if user_query := st.chat_input("Ask a question about your crops..."):
-            st.session_state.messages.append({"role": "user", "content": user_query})
-            with st.chat_message("user"):
-                st.write(user_query)
+            # STRICT GROUNDING PROMPT
+            template = """You are a strict FarmAI Agricultural Assistant. 
+            Use ONLY the following pieces of context to answer the question at the end. 
+            If the answer is not contained within the context, politely state that you 
+            do not have information on that specific topic in your agricultural manual.
+            
+            {context}
+            
+            Question: {question}
+            Grounded Answer:"""
+            
+            QA_PROMPT = PromptTemplate(
+                template=template, input_variables=["context", "question"]
+            )
 
-            # Retrieve info
-            relevant_docs = vectorstore.similarity_search(user_query, k=2)
-            context_text = "\n\n".join([d.page_content for d in relevant_docs])
-            full_prompt = f"Context: {context_text}\n\nQuestion: {user_query}"
+            self.qa_chain = RetrievalQA.from_chain_type(
+                llm=llm,
+                chain_type="stuff",
+                retriever=vectorstore.as_retriever(search_kwargs={"k": 3}),
+                chain_type_kwargs={"prompt": QA_PROMPT}
+            )
+            return True
+        except Exception as e:
+            st.error(f"Error: {e}")
+            return False
 
-            with st.chat_message("assistant"):
-                ai_response = llm.invoke(full_prompt)
-                answer = ai_response.content
-                st.write(answer)
-                st.session_state.messages.append({"role": "assistant", "content": answer})
+    def query(self, question: str):
+        if not self.qa_chain:
+            return "System not ready."
+        try:
+            # Use invoke instead of run for better compatibility with 2026 standards
+            result = self.qa_chain.invoke({"query": question})
+            return result.get('result')
+        except Exception as e:
+            return f"An error occurred: {e}"
 
-    except Exception as e:
-        st.error(f"System Error: {e}")
+# ==============================================================================
+# PART 3: UI
+# ==============================================================================
+st.set_page_config(page_title="FarmAI Knowledge Assistant", page_icon="🌾")
+st.title("🌾 FarmAI Grounded Assistant")
+
+@st.cache_resource
+def initialize_system():
+    api_key = st.secrets.get("GOOGLE_API_KEY")
+    if not api_key: return None, False
+    
+    documents = load_agricultural_data()
+    system = FarmAISystem(api_key=api_key)
+    success = system.build_knowledge_base(documents)
+    return system, success
+
+farm_ai, success = initialize_system()
+
+if success:
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    if prompt := st.chat_input("Ask a question about your manual..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        with st.chat_message("assistant"):
+            response = farm_ai.query(prompt)
+            st.markdown(response)
+            st.session_state.messages.append({"role": "assistant", "content": response})
