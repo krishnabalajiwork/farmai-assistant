@@ -6,17 +6,19 @@ import nest_asyncio
 # Apply the patch for the event loop issue
 nest_asyncio.apply()
 
-# MODULAR IMPORTS
+# MODULAR IMPORTS (LangChain v0.3 compatible)
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-# These now come from the classic/legacy package in v0.3
+# These now come from the classic package in v0.3
 from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 
+# Core components
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
+
 # ==============================================================================
 # PART 1: DATA LOADER CODE
 # ==============================================================================
@@ -40,7 +42,7 @@ def load_agricultural_data() -> List[Dict[str, Any]]:
     ]
 
 # ==============================================================================
-# PART 2: RAG SYSTEM (Modern OpenAI Version)
+# PART 2: RAG SYSTEM (OpenRouter Compatible)
 # ==============================================================================
 class FarmAISystem:
     def __init__(self, api_key: str):
@@ -50,6 +52,8 @@ class FarmAISystem:
 
     def build_knowledge_base(self, documents: List[Dict[str, Any]]):
         try:
+            # Note: We use OpenAI embeddings as they are standard, 
+            # but if you use OpenRouter for embeddings, update the base_url here too.
             embeddings = OpenAIEmbeddings(openai_api_key=self.api_key)
             
             langchain_docs = [
@@ -61,7 +65,17 @@ class FarmAISystem:
             vectorstore = FAISS.from_documents(final_docs, embeddings)
             retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-            llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, openai_api_key=self.api_key)
+            # OPENROUTER CONFIGURATION
+            llm = ChatOpenAI(
+                model="openai/gpt-3.5-turbo", # Change this to any OpenRouter model id
+                openai_api_key=self.api_key,
+                base_url="https://openrouter.ai/api/v1",
+                default_headers={
+                    "HTTP-Referer": "https://farmai-assistant.streamlit.app/",
+                    "X-Title": "FarmAI Assistant",
+                },
+                temperature=0
+            )
 
             system_prompt = (
                 "You are an expert agricultural assistant. Use the following pieces of "
@@ -100,9 +114,11 @@ st.title("🌾 FarmAI Knowledge Assistant")
 
 @st.cache_resource
 def initialize_system():
-    api_key = st.secrets.get("OPENAI_API_KEY")
+    # Make sure your secret in Streamlit dashboard is named 'OPENROUTER_API_KEY'
+    api_key = st.secrets.get("OPENROUTER_API_KEY")
     if not api_key:
         return None, False
+    
     documents = load_agricultural_data()
     farm_ai_system = FarmAISystem(api_key=api_key)
     success = farm_ai_system.build_knowledge_base(documents)
@@ -112,7 +128,7 @@ farm_ai, success = initialize_system()
 
 if success:
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "How can I help you today?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "How can I help you with your crops today?"}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -124,9 +140,9 @@ if success:
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Analyzing..."):
+            with st.spinner("FarmAI is checking the database..."):
                 response = farm_ai.query(prompt)
                 st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
 else:
-    st.error("Please ensure 'OPENAI_API_KEY' is in Streamlit Secrets and 'langchain-classic' is in requirements.txt.")
+    st.error("Missing API Key. Please add 'OPENROUTER_API_KEY' to your Streamlit Secrets.")
