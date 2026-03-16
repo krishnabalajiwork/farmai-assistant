@@ -7,19 +7,16 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
-# Fix for Streamlit event loop
 nest_asyncio.apply()
 
 st.set_page_config(page_title="FarmAI Grounded Assistant", page_icon="🌾")
 st.title("🌾 FarmAI Grounded Assistant")
 
-# --- 1. Your Agricultural Manual ---
+# --- Agricultural Manual Data ---
 def load_manual():
     return [
         Document(page_content="Tomato Blight (Early and Late): Early blight shows brown spots; late blight causes dark water-soaked lesions. Management: Use certified seeds, crop rotation, and copper-based fungicides."),
         Document(page_content="Rice Stem Borer: Larvae cause 'dead heart' in young plants. Management: Use pheromone traps and avoid excessive nitrogen."),
-        Document(page_content="Rice Blast (Magnaporthe oryzae): Pathogen spreads spores. Management includes nitrogen timing and fungicide protocols."),
-        Document(page_content="Maize Stem Borer: Cultural practices include destruction of crop residues to break lifecycle."),
         Document(page_content="Wheat Rust: Pathogenesis includes stem, leaf, and stripe rust. Surveillance models help predict epidemics."),
     ]
 
@@ -27,24 +24,24 @@ api_key = st.secrets.get("GOOGLE_API_KEY")
 
 if api_key:
     try:
-        # THE FIX: Using the most stable production model ID
+        # THE ABSOLUTE FIX: Switching to the newest 'text-embedding-004' 
+        # but EXPLICITLY setting the task_type to 'retrieval_query'.
         embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/embedding-001", 
+            model="models/text-embedding-004", 
             google_api_key=api_key,
-            task_type="retrieval_query"
+            task_type="retrieval_query" 
         )
         
         vectorstore = FAISS.from_documents(load_manual(), embeddings)
         retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 
-        # THE FIX: Stable LLM model ID for production path
+        # LLM FIX: Use the stable flash ID
         llm = ChatGoogleGenerativeAI(
             model="gemini-1.5-flash", 
             google_api_key=api_key,
-            temperature=0  # Zero temperature forces factual grounding
+            temperature=0
         )
 
-        # STRICT GROUNDING PROMPT: Prevents general knowledge (like explaining NLP)
         prompt = ChatPromptTemplate.from_template("""
         You are a specialized Agricultural Assistant. 
         You MUST ONLY use the provided context to answer the question. 
@@ -57,7 +54,6 @@ if api_key:
         {question}
         """)
 
-        # LCEL Chain - Avoids 'langchain.chains' ModuleNotFoundError
         rag_chain = (
             {"context": retriever, "question": RunnablePassthrough()}
             | prompt
@@ -68,15 +64,13 @@ if api_key:
         st.success("✅ Grounded Knowledge Base Active!")
 
         if user_query := st.chat_input("Ask a question from the manual..."):
-            with st.chat_message("user"):
-                st.write(user_query)
-            
+            with st.chat_message("user"): st.write(user_query)
             with st.chat_message("assistant"):
-                with st.spinner("Searching manual..."):
-                    response = rag_chain.invoke(user_query)
-                    st.write(response)
+                response = rag_chain.invoke(user_query)
+                st.write(response)
 
     except Exception as e:
+        # We print the full error here to help you debug in case of rate limits
         st.error(f"System Error: {e}")
 else:
     st.warning("Please add GOOGLE_API_KEY to Streamlit Secrets.")
