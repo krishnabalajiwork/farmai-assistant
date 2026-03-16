@@ -4,23 +4,20 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGener
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 
-# Apply the patch for the event loop issue
 nest_asyncio.apply()
 
 st.set_page_config(page_title="FarmAI Assistant", page_icon="🌾")
 st.title("🌾 FarmAI Assistant")
 
-# Step 1: Securely get your API Key
 api_key = st.secrets.get("GOOGLE_API_KEY")
 
 if not api_key:
     st.error("Missing API Key! Please add 'GOOGLE_API_KEY' to your Streamlit Secrets.")
 else:
     try:
-        # Step 2: Initialize Stable Models
-        # We use 'text-embedding-004' (newest stable) and 'gemini-1.5-flash'
+        # THE FIX IS HERE: Changed to models/embedding-001
         embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/text-embedding-004", 
+            model="models/embedding-001", 
             google_api_key=api_key
         )
         
@@ -30,20 +27,15 @@ else:
             temperature=0.3
         )
 
-        # Step 3: Define your Agricultural Knowledge Base
-        # You can add more Document lines here as your research grows
         knowledge_base_data = [
             Document(page_content="Tomato Blight: Identified by brown spots with yellow halos. Management: Ensure air circulation and use copper-based fungicides."),
             Document(page_content="Rice Stem Borer: Larvae cause 'dead heart' in young plants. Management: Use pheromone traps and avoid excessive nitrogen."),
             Document(page_content="Tomato Sorting: High-quality tomatoes should be firm, uniform in color, and free of cracks or blemishes.")
         ]
         
-        # Build the searchable index (Vector Store)
         vectorstore = FAISS.from_documents(knowledge_base_data, embeddings)
-
         st.success("✅ FarmAI Knowledge Base is Live!")
 
-        # Step 4: Simple Chat Interface
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
@@ -56,32 +48,16 @@ else:
             with st.chat_message("user"):
                 st.write(user_query)
 
-            # --- MANUAL RAG PROCESS (The "No-Chain" Method) ---
-            # 1. Search for the most relevant info in your data
             relevant_docs = vectorstore.similarity_search(user_query, k=2)
             context_text = "\n\n".join([d.page_content for d in relevant_docs])
 
-            # 2. Construct the prompt for Gemini
-            full_prompt = f"""
-            You are a helpful agricultural assistant. Use the following context to answer the user's question.
-            
-            CONTEXT:
-            {context_text}
-            
-            USER QUESTION:
-            {user_query}
-            
-            If the answer isn't in the context, use your general knowledge but mention you are doing so.
-            """
+            full_prompt = f"Context: {context_text}\n\nQuestion: {user_query}"
 
-            # 3. Get the answer
             with st.chat_message("assistant"):
-                with st.spinner("Analyzing..."):
-                    ai_response = llm.invoke(full_prompt)
-                    answer = ai_response.content
-                    st.write(answer)
-                    st.session_state.messages.append({"role": "assistant", "content": answer})
+                ai_response = llm.invoke(full_prompt)
+                answer = ai_response.content
+                st.write(answer)
+                st.session_state.messages.append({"role": "assistant", "content": answer})
 
     except Exception as e:
         st.error(f"Initialization Error: {e}")
-        st.info("Check if your API Key is valid or if you have hit your quota.")
