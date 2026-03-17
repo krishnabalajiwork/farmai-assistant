@@ -1,6 +1,4 @@
 streamlit
-langchain
-langchain-openai
-langchain-community
-faiss-cpu
+anthropic
 nest-asyncio
+numpy
