@@ -118,10 +118,3 @@ if api_key:
         st.error(f"System Error: {e}")
 else:
     st.warning("⚠️ Please add GROQ_API_KEY to your Streamlit Secrets.")
-```
-
-**`requirements.txt`** (unchanged):
-```
-streamlit
-groq
-nest-asyncio
