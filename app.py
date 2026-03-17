@@ -36,8 +36,9 @@ if api_key:
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash",  # Free tier model
+            model_name="models/gemini-2.0-flash",   # full path format
             system_instruction=SYSTEM_PROMPT
+)
         )
 
         st.success("✅ Gemini Knowledge Base Active!")
