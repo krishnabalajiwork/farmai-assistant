@@ -1,4 +1,3 @@
 streamlit
-anthropic
+google-generativeai
 nest-asyncio
-numpy
