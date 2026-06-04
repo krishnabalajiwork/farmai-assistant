@@ -202,4 +202,3 @@ GROQ_API_KEY = "your_groq_api_key"
 except Exception as e:
 
     st.error(f"Startup Error: {str(e)}")
-```
