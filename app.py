@@ -1,27 +1,32 @@
+```python
 import streamlit as st
 from groq import Groq
 
-st.set_page_config(page_title="FarmAI Assistant", page_icon="🌾")
+st.set_page_config(
+    page_title="FarmAI Assistant",
+    page_icon="🌾"
+)
 
 st.title("🌾 FarmAI Assistant")
+
 st.markdown("""
 Welcome to **FarmAI** — your smart farming companion!
 
 I can only help you with:
-- 🍅 **Tomato** — Blight (Early & Late), Sorting
-- 🌾 **Rice** — Stem Borer, Blast
-- 🌽 **Maize** — Stem Borer
-- 🌿 **Wheat** — Rust
 
-> 💬 Ask me anything about the above crops!
+- 🍅 Tomato — Blight (Early & Late), Sorting
+- 🌾 Rice — Stem Borer, Blast
+- 🌽 Maize — Stem Borer
+- 🌿 Wheat — Rust
+
+💬 Ask me anything about the above crops!
 """)
 
 st.divider()
 
-# --- MANUAL DOCUMENTS ---
 MANUAL_DOCS = [
     "Tomato Blight (Early and Late): Early blight shows brown spots; late blight causes dark water-soaked lesions. Management: Use certified seeds, crop rotation, and copper-based fungicides.",
-    "Rice Stem Borer: Larvae cause 'dead heart' in young plants. Management: Use pheromone traps and avoid excessive nitrogen.",
+    "Rice Stem Borer: Larvae cause dead heart in young plants. Management: Use pheromone traps and avoid excessive nitrogen.",
     "Rice Blast: Management includes nitrogen timing and fungicide protocols.",
     "Maize Stem Borer: Cultural practices include destruction of crop residues to break lifecycle.",
     "Wheat Rust: Surveillance models help predict epidemics. Use resistant cultivars.",
@@ -34,13 +39,14 @@ GREETINGS = [
     "hey",
     "hii",
     "helo",
+    "howdy",
     "sup",
     "whats up",
-    "what's up",
-    "howdy"
+    "what's up"
 ]
 
-def simple_retrieve(query: str, docs: list, k: int = 2):
+
+def simple_retrieve(query, docs, k=2):
     query_words = set(query.lower().split())
 
     scored = []
@@ -55,27 +61,27 @@ def simple_retrieve(query: str, docs: list, k: int = 2):
 
     return "\n\n".join(top_docs) if top_docs else ""
 
+
 SYSTEM_PROMPT = """
-You are FarmAI, a strict agricultural assistant.
+You are FarmAI.
 
 RULES:
 
-1. If the user greets you, respond warmly and mention the supported topics.
+1. If the user greets you, greet them.
 
-2. If CONTEXT is provided, answer ONLY from the CONTEXT.
+2. If CONTEXT is provided, answer ONLY from that context.
 
-3. If no CONTEXT is available, reply exactly:
+3. If no context is available, reply exactly:
 
-"I'm sorry, that topic is not in my manual. I can only help with Tomato Blight, Tomato Sorting, Rice Stem Borer, Rice Blast, Maize Stem Borer, and Wheat Rust. 🌾"
+I'm sorry, that topic is not in my manual. I can only help with Tomato Blight, Tomato Sorting, Rice Stem Borer, Rice Blast, Maize Stem Borer, and Wheat Rust. 🌾
 
-4. If the question is not farming related, reply exactly:
+4. If off-topic, reply exactly:
 
-"I'm FarmAI, built only for farming questions. I'm not designed for that topic! 🌾 Ask me about your crops instead."
-
-Never use outside knowledge.
+I'm FarmAI, built only for farming questions. I'm not designed for that topic! 🌾 Ask me about your crops instead.
 """
 
 try:
+
     api_key = st.secrets["GROQ_API_KEY"]
 
     client = Groq(api_key=api_key)
@@ -85,40 +91,10 @@ try:
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Suggestions
-    if not st.session_state.messages:
-
-        st.markdown("### Try asking:")
-
-        suggestions = [
-            "How to treat tomato blight?",
-            "What is rice stem borer?",
-            "How to manage wheat rust?",
-            "How to sort tomatoes?"
-        ]
-
-        cols = st.columns(2)
-
-        for i, suggestion in enumerate(suggestions):
-            if cols[i % 2].button(
-                suggestion,
-                key=f"suggestion_{i}",
-                use_container_width=True
-            ):
-                st.session_state.messages.append(
-                    {
-                        "role": "user",
-                        "content": suggestion
-                    }
-                )
-                st.rerun()
-
-    # Display history
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
 
-    # Chat input
     user_query = st.chat_input("Ask me about your crops...")
 
     if user_query:
@@ -135,76 +111,96 @@ try:
 
         with st.chat_message("assistant"):
 
-            with st.spinner("FarmAI is thinking..."):
+            with st.spinner("Thinking..."):
 
-                if user_query.strip().lower() in GREETINGS:
+                try:
 
-                    answer = """Hello! 👋 I'm FarmAI, your farming assistant.
+                    if user_query.lower().strip() in GREETINGS:
 
-I can help you with:
+                        answer = """
+Hello! 👋 I'm FarmAI.
 
-- 🍅 Tomato Blight and Sorting
-- 🌾 Rice Stem Borer and Blast
-- 🌽 Maize Stem Borer
-- 🌿 Wheat Rust
+I can help with:
+
+🍅 Tomato Blight & Sorting
+🌾 Rice Stem Borer & Blast
+🌽 Maize Stem Borer
+🌿 Wheat Rust
 
 What would you like to know?
 """
 
-                else:
+                    else:
 
-                    context = simple_retrieve(
-                        user_query,
-                        MANUAL_DOCS
-                    )
+                        context = simple_retrieve(
+                            user_query,
+                            MANUAL_DOCS
+                        )
 
-                    if context:
-                        prompt = f"""
+                        if context:
+
+                            prompt = f"""
 CONTEXT:
 {context}
 
 QUESTION:
 {user_query}
 """
-                    else:
-                        prompt = f"""
+
+                        else:
+
+                            prompt = f"""
 NO CONTEXT AVAILABLE
 
 QUESTION:
 {user_query}
 """
 
-                    response = client.chat.completions.create(
-                        model="llama-3.3-70b-versatile",
-                        messages=[
-                            {
-                                "role": "system",
-                                "content": SYSTEM_PROMPT
-                            },
-                            {
-                                "role": "user",
-                                "content": prompt
-                            }
-                        ],
-                        temperature=0,
-                        max_tokens=512
+                        st.info("Calling Groq API...")
+
+                        response = client.chat.completions.create(
+                            model="llama-3.3-70b-versatile",
+                            messages=[
+                                {
+                                    "role": "system",
+                                    "content": SYSTEM_PROMPT
+                                },
+                                {
+                                    "role": "user",
+                                    "content": prompt
+                                }
+                            ],
+                            temperature=0,
+                            max_tokens=512
+                        )
+
+                        st.success("Groq API replied!")
+
+                        answer = response.choices[0].message.content
+
+                    st.write(answer)
+
+                    st.session_state.messages.append(
+                        {
+                            "role": "assistant",
+                            "content": answer
+                        }
                     )
 
-                    answer = response.choices[0].message.content
-
-                st.write(answer)
-
-                st.session_state.messages.append(
-                    {
-                        "role": "assistant",
-                        "content": answer
-                    }
-                )
+                except Exception as e:
+                    st.error(f"Groq Error: {str(e)}")
 
 except KeyError:
-    st.warning(
-        "⚠️ Please add GROQ_API_KEY in Streamlit Secrets."
-    )
+
+    st.error("""
+GROQ_API_KEY not found.
+
+Add this in Streamlit Secrets:
+
+GROQ_API_KEY = "your_groq_api_key"
+""")
 
 except Exception as e:
-    st.error(f"System Error: {str(e)}")
+
+    st.error(f"Startup Error: {str(e)}")
+```
