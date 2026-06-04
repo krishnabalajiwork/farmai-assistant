@@ -1,8 +1,5 @@
 import streamlit as st
-import nest_asyncio
 from groq import Groq
-
-nest_asyncio.apply()
 
 st.set_page_config(page_title="FarmAI Assistant", page_icon="🌾")
 
@@ -18,9 +15,10 @@ I can only help you with:
 
 > 💬 Ask me anything about the above crops!
 """)
+
 st.divider()
 
-# --- YOUR MANUAL DOCS (only these will be used to answer) ---
+# --- MANUAL DOCUMENTS ---
 MANUAL_DOCS = [
     "Tomato Blight (Early and Late): Early blight shows brown spots; late blight causes dark water-soaked lesions. Management: Use certified seeds, crop rotation, and copper-based fungicides.",
     "Rice Stem Borer: Larvae cause 'dead heart' in young plants. Management: Use pheromone traps and avoid excessive nitrogen.",
@@ -30,114 +28,183 @@ MANUAL_DOCS = [
     "Tomato Sorting: High-quality tomatoes must be firm, uniform in color, and free of cracks."
 ]
 
-GREETINGS = ["hi", "hello", "hey", "hii", "helo", "sup", "whats up", "what's up", "howdy"]
+GREETINGS = [
+    "hi",
+    "hello",
+    "hey",
+    "hii",
+    "helo",
+    "sup",
+    "whats up",
+    "what's up",
+    "howdy"
+]
 
-def simple_retrieve(query: str, docs: list, k: int = 2) -> str:
+def simple_retrieve(query: str, docs: list, k: int = 2):
     query_words = set(query.lower().split())
-    scored = [(len(set(doc.lower().split()) & query_words), doc) for doc in docs]
+
+    scored = []
+
+    for doc in docs:
+        score = len(set(doc.lower().split()) & query_words)
+        scored.append((score, doc))
+
     scored.sort(reverse=True)
-    top = [doc for score, doc in scored[:k] if score > 0]
-    return "\n\n".join(top) if top else ""
 
-api_key = st.secrets.get("GROQ_API_KEY")
+    top_docs = [doc for score, doc in scored[:k] if score > 0]
 
-SYSTEM_PROMPT = """You are FarmAI, a strict agricultural assistant.
+    return "\n\n".join(top_docs) if top_docs else ""
 
-STRICT RULES — follow these exactly, no exceptions:
+SYSTEM_PROMPT = """
+You are FarmAI, a strict agricultural assistant.
 
-1. GREETING: If the user says hi/hello/hey or any greeting, reply warmly:
-   "Hello! 👋 I'm FarmAI, your farming assistant. I can help you with:
-   - 🍅 Tomato Blight and Sorting
-   - 🌾 Rice Stem Borer and Blast
-   - 🌽 Maize Stem Borer
-   - 🌿 Wheat Rust
-   What would you like to know?"
+RULES:
 
-2. CONTEXT PROVIDED: If CONTEXT is provided, answer ONLY using that context word-for-word. Do not add any extra information, tips, or knowledge outside the context.
+1. If the user greets you, respond warmly and mention the supported topics.
 
-3. NO CONTEXT: If no CONTEXT is provided, it means the topic is not in the manual. Reply exactly:
-   "I'm sorry, that topic is not in my manual. I can only help with Tomato Blight, Tomato Sorting, Rice Stem Borer, Rice Blast, Maize Stem Borer, and Wheat Rust. 🌾"
+2. If CONTEXT is provided, answer ONLY from the CONTEXT.
 
-4. OFF-TOPIC: If the question is not about farming at all, reply exactly:
-   "I'm FarmAI, built only for farming questions. I'm not designed for that topic! 🌾 Ask me about your crops instead."
+3. If no CONTEXT is available, reply exactly:
 
-NEVER use your own knowledge. ONLY use what is in the CONTEXT provided.
+"I'm sorry, that topic is not in my manual. I can only help with Tomato Blight, Tomato Sorting, Rice Stem Borer, Rice Blast, Maize Stem Borer, and Wheat Rust. 🌾"
+
+4. If the question is not farming related, reply exactly:
+
+"I'm FarmAI, built only for farming questions. I'm not designed for that topic! 🌾 Ask me about your crops instead."
+
+Never use outside knowledge.
 """
 
-if api_key:
-    try:
-        client = Groq(api_key=api_key)
-        st.success("✅ FarmAI is ready!")
+try:
+    api_key = st.secrets["GROQ_API_KEY"]
 
-        if "messages" not in st.session_state:
-            st.session_state.messages = []
+    client = Groq(api_key=api_key)
 
-        # Quick suggestion buttons
-        if not st.session_state.messages:
-            st.markdown("**Try asking:**")
-            cols = st.columns(2)
-            suggestions = [
-                "How to treat tomato blight?",
-                "What is rice stem borer?",
-                "How to manage wheat rust?",
-                "How to sort tomatoes?"
-            ]
-            for i, s in enumerate(suggestions):
-                if cols[i % 2].button(s, use_container_width=True, key=f"btn_{i}"):
-                    st.session_state.messages.append({"role": "user", "content": s})
-                    st.rerun()
+    st.success("✅ FarmAI is ready!")
 
-        # Display chat history
-        for msg in st.session_state.messages:
-            with st.chat_message(msg["role"]):
-                st.write(msg["content"])
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-        # Auto-answer if last message is from user with no reply yet
-        if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
-            last_query = st.session_state.messages[-1]["content"]
-            
-            with st.chat_message("assistant"):
-                with st.spinner("FarmAI is thinking..."):
+    # Suggestions
+    if not st.session_state.messages:
 
-                    # Check if greeting
-                    if last_query.strip().lower() in GREETINGS:
-                        answer = """Hello! 👋 I'm FarmAI, your farming assistant. I can help you with:
+        st.markdown("### Try asking:")
+
+        suggestions = [
+            "How to treat tomato blight?",
+            "What is rice stem borer?",
+            "How to manage wheat rust?",
+            "How to sort tomatoes?"
+        ]
+
+        cols = st.columns(2)
+
+        for i, suggestion in enumerate(suggestions):
+            if cols[i % 2].button(
+                suggestion,
+                key=f"suggestion_{i}",
+                use_container_width=True
+            ):
+                st.session_state.messages.append(
+                    {
+                        "role": "user",
+                        "content": suggestion
+                    }
+                )
+                st.rerun()
+
+    # Display history
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.write(msg["content"])
+
+    # Chat input
+    user_query = st.chat_input("Ask me about your crops...")
+
+    if user_query:
+
+        st.session_state.messages.append(
+            {
+                "role": "user",
+                "content": user_query
+            }
+        )
+
+        with st.chat_message("user"):
+            st.write(user_query)
+
+        with st.chat_message("assistant"):
+
+            with st.spinner("FarmAI is thinking..."):
+
+                if user_query.strip().lower() in GREETINGS:
+
+                    answer = """Hello! 👋 I'm FarmAI, your farming assistant.
+
+I can help you with:
+
 - 🍅 Tomato Blight and Sorting
 - 🌾 Rice Stem Borer and Blast
 - 🌽 Maize Stem Borer
 - 🌿 Wheat Rust
 
-What would you like to know?"""
+What would you like to know?
+"""
+
+                else:
+
+                    context = simple_retrieve(
+                        user_query,
+                        MANUAL_DOCS
+                    )
+
+                    if context:
+                        prompt = f"""
+CONTEXT:
+{context}
+
+QUESTION:
+{user_query}
+"""
                     else:
-                        context = simple_retrieve(last_query, MANUAL_DOCS)
+                        prompt = f"""
+NO CONTEXT AVAILABLE
 
-                        if context:
-                            user_msg = f"CONTEXT:\n{context}\n\nQUESTION:\n{last_query}"
-                        else:
-                            user_msg = f"NO CONTEXT AVAILABLE.\n\nQUESTION:\n{last_query}"
+QUESTION:
+{user_query}
+"""
 
-                        history = [{"role": "system", "content": SYSTEM_PROMPT}]
-                        for m in st.session_state.messages[:-1]:
-                            history.append({"role": m["role"], "content": m["content"]})
-                        history.append({"role": "user", "content": user_msg})
+                    response = client.chat.completions.create(
+                        model="llama-3.3-70b-versatile",
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": SYSTEM_PROMPT
+                            },
+                            {
+                                "role": "user",
+                                "content": prompt
+                            }
+                        ],
+                        temperature=0,
+                        max_tokens=512
+                    )
 
-                        response = client.chat.completions.create(
-                            model="llama-3.3-70b-versatile",
-                            messages=history,
-                            max_tokens=512,
-                            temperature=0  # Zero temperature = strict, no creativity
-                        )
-                        answer = response.choices[0].message.content
+                    answer = response.choices[0].message.content
 
-                    st.write(answer)
-                    st.session_state.messages.append({"role": "assistant", "content": answer})
-                    st.rerun()
+                st.write(answer)
 
-        if user_query := st.chat_input("Ask me about your crops..."):
-            st.session_state.messages.append({"role": "user", "content": user_query})
-            st.rerun()
+                st.session_state.messages.append(
+                    {
+                        "role": "assistant",
+                        "content": answer
+                    }
+                )
 
-    except Exception as e:
-        st.error(f"System Error: {e}")
-else:
-    st.warning("⚠️ Please add GROQ_API_KEY to your Streamlit Secrets.")
+except KeyError:
+    st.warning(
+        "⚠️ Please add GROQ_API_KEY in Streamlit Secrets."
+    )
+
+except Exception as e:
+    st.error(f"System Error: {str(e)}")
