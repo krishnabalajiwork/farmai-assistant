@@ -1,3 +1,2 @@
 streamlit
-groq
-nest-asyncio
+groq==0.30.0
