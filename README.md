@@ -1,109 +1,172 @@
-# 🌾 FarmAI Knowledge Assistant
-**Democratizing agricultural knowledge through AI-powered conversational assistance**
+# 🌾 FarmAI Knowledge Assistant — AgTech RAG System
+
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://farmai-assistant.streamlit.app/)
-[![GitHub](https://img.shields.io/badge/GitHub-krishnabalajiwork-blue)](https://github.com/krishnabalajiwork/farmai-assistant)
----
-## 🎯 Project Overview
-FarmAI Knowledge Assistant is an AI-powered conversational system designed to make agricultural knowledge accessible and engaging for students, hobbyists, and young people interested in pursuing farming. Built as a showcase project, it demonstrates a robust RAG (Retrieval-Augmented Generation) pipeline using modern, reliable, and free-to-start AI services. 
-[https://farmai-assistant.streamlit.app/](https://farmai-assistant.streamlit.app/)
+[![Tech Stack](https://img.shields.io/badge/Stack-LangChain_%7C_Groq_%7C_FAISS-green?style=for-the-badge)](https://github.com/krishnabalajiwork/farmai-assistant)
 
-### 🌍 Social Impact
-- **Problem**: Young people and aspiring farmers often face a steep learning curve and lack modern, engaging resources to get started in agriculture.
-- **Solution**: A RAG-powered chatbot providing instant access to foundational knowledge.
-- **Impact**: Inspires and empowers the next generation of agricultural enthusiasts by providing an easy-to-use, AI-powered educational tool.
+> **Developer & Architecture Documentation**  
+> An interactive Retrieval-Augmented Generation (RAG) assistant designed to democratize domain-specific agricultural knowledge. Built using LangChain, vector similarity search via FAISS, and high-speed LLM inference.
 
 ---
-## 🚀 Key Features
-### 🤖 AI Capabilities
-- **Retrieval-Augmented Generation (RAG)**: Answers questions by finding relevant information from a built-in agricultural knowledge base.
-- **Conversational AI**: Provides context-aware responses in a natural, chat-like interface.
-- **Source Attribution**: Every answer is based on the original agricultural documents.
+
+## 🏗️ System Architecture & RAG Pipeline Flow
+
+FarmAI Assistant transforms unstructured agricultural documentation into actionable insights through an automated vector search and context-synthesis pipeline:
+
+```text
+[ User Query ]
+       │
+       ▼
+[ Query Embedding Engine ] ──> (Semantic Vector Mapping)
+                                         │
+                                         ▼
+                             [ FAISS Vector Database ]
+                                         │
+                               (Context Retrieval)
+                                         ▼
+[ High-Speed LLM Inference (Groq / Gemini) ] ──> (Context-Grounded Response)
+                                                               │
+                                                               ▼
+                                                     [ Streamlit UI Output ]
+
+```
 
 ---
-## 🛠️ Technology Stack
-### Core Framework
-- **Frontend**: Streamlit
-- **Backend**: Python with the LangChain framework
-- **LLM**: Google Gemini (`gemini-1.5-flash-latest`)
-- **Vector Store**: FAISS for efficient similarity search
-- **Embeddings**: Google Generative AI Embeddings (`models/embedding-001`)
 
-### Key Libraries
-- **`langchain-google-genai`**: For integration with the Gemini API.
-- **`langchain-community`**: Provides access to community components like FAISS.
-- **`nest-asyncio`**: Solves asynchronous event loop issues within the Streamlit environment.
+## ⚡ Key Capabilities
+
+* **Retrieval-Augmented Generation (RAG):** Contextually grounds LLM responses using pre-indexed domain documentation on crop diseases, pest controls, and yield practices.
+* **Low-Latency Inference:** Integrated with Groq API / Gemini acceleration for real-time streaming chat interactions.
+* **Strict Source Attribution:** Limits hallucinations by forcing answer generation to draw directly from retrieved context chunks.
+* **Asynchronous Execution:** Handles Streamlit event-loop constraints using `nest-asyncio` for non-blocking UI updates.
 
 ---
-## 📁 Project Structure
-The project has been simplified to a single-file architecture for stability and ease of deployment.
 
-farmai-assistant/  
-├── app.py                 # Main Streamlit application with all logic  
-├── requirements.txt       # Python dependencies  
-├── README.md              # This file  
-└── .streamlit/  
-    └── config.toml        # Streamlit configuration  
+## 🌾 Supported Knowledge Base Domains
 
----
-## 🚀 Quick Start
-### Local Development
-1. **Clone the repository**
-    ```
-    git clone https://github.com/krishnabalajiwork/farmai-assistant.git
-    cd farmai-assistant
-    ```
-2. **Install dependencies**
-    ```
-    pip install -r requirements.txt
-    ```
-3. **Set up Google API Key**
-    ```
-    # Get your free API key from Google AI Studio (aistudio.google.com)
-    export GOOGLE_API_KEY="your-google-api-key-here"
-    ```
-4. **Run the application**
-    ```
-    streamlit run app.py
-    ```
+The assistant currently provides contextual guidance on key crops and common agricultural challenges:
 
-### Streamlit Cloud Deployment
-1. **Fork this repository** to your GitHub account.
-2. **Visit [Google AI Studio](https://aistudio.google.com/)** to create a free API key.
-3. **Visit [Streamlit Cloud](https://share.streamlit.io/)** and deploy your forked repository.
-4. In the app's **Settings -> Secrets**, add your Google API key:
-    ```
-    GOOGLE_API_KEY = "your-google-api-key-here"
-    ```
+* **🍅 Tomato:** Early Blight, Late Blight, Sorting & Quality Inspection
+* **🌾 Rice:** Stem Borer, Blast Disease
+* **🌽 Maize:** Stem Borer Control
+* **🌾 Wheat:** Rust Identification & Treatment
+* **🧪 Soil & Crop Management:** Organic Pest Management & Season-Specific Planting Guidelines
 
 ---
-## 💡 Usage Examples
-### Example Queries
-- *"My tomato plants have yellow spots and wilting leaves. What should I do?"*
-- *"When is the best time to plant rice in monsoon season?"*
-- *"Organic pest control methods for vegetables"*
 
-### RAG Workflow
-1. **User Query**: A student or enthusiast asks a question about a crop disease.
-2. **Document Retrieval**: The system searches its vector knowledge base to find the most relevant agricultural guides.
-3. **Answer Synthesis**: The Gemini model receives the user's question and the retrieved documents, then generates a comprehensive, helpful answer based on the provided context.
+## 🔌 Technology Stack
 
----
-## 📊 Knowledge Base
-The system includes agricultural knowledge covering:
-- **Crop Diseases**: Identification, symptoms, and treatment.
-- **Pest Management**: Integrated pest management strategies.
-- **Best Practices**: Crop-specific cultivation guidelines.
+| Layer | Component / Tool | Function |
+| --- | --- | --- |
+| **Frontend UI** | Streamlit | Lightweight reactive web interface |
+| **Orchestration** | Python + LangChain Framework | Document splitting, embedding pipelines, and chain logic |
+| **Vector Store** | FAISS (Facebook AI Similarity Search) | High-performance vector index for similarity queries |
+| **LLM Inference** | Groq API / Google Gemini | Rapid contextual reasoning and query response synthesis |
+| **Async Handling** | `nest-asyncio` | Solves nested event loop conflicts in Streamlit execution |
 
 ---
-## 🎓 Educational Value
-This project is an excellent case study in:
-- **Pragmatic AI Development**: Demonstrates pivoting from one API (OpenAI) to another (Google Gemini) to solve real-world compatibility and access issues.
-- **Resilient RAG Architecture**: The core RAG pipeline is robust and can be adapted to work with different LLMs and embedding models.
-- **Environment-Specific Debugging**: Shows how to solve common deployment issues like asynchronous event loops (`nest-asyncio`) and dependency management (`langchain-community`).
+
+## 📂 Repository Structure
+
+```text
+farmai-assistant/
+ ├── app.py                # Main Streamlit UI & RAG pipeline execution logic
+ ├── requirements.txt      # Python runtime dependencies
+ ├── README.md             # Technical documentation
+ └── .streamlit/
+      └── config.toml      # UI styling & server runtime parameters
+
+```
 
 ---
-## 📞 Contact
-**Chintha Krishna Balaji**  
-- 📧 Email: [krishnabalajiwork@gmail.com](mailto:krishnabalajiwork@gmail.com)  
-- 💼 LinkedIn: [chintha-krishna-balaji](https://www.linkedin.com/in/chintha-krishna-balaji)  
-- 🐱 GitHub: [krishnabalajiwork](https://github.com/krishnabalajiwork)
+
+## ⚙️ Environment Configuration
+
+Create a `.env` file in your root project directory (or configure secrets in Streamlit Cloud):
+
+```env
+# Groq API Configuration
+GROQ_API_KEY="your_groq_api_key"
+
+# Google Gemini API Configuration (Fallback/Alternative)
+GOOGLE_API_KEY="your_google_api_key"
+
+```
+
+---
+
+## 🚀 Quickstart & Local Setup
+
+### Prerequisites
+
+* **Python:** v3.10 or higher
+* **API Key:** Groq API Key or Google AI Studio API Key
+
+### 1. Clone & Install
+
+```bash
+git clone [https://github.com/krishnabalajiwork/farmai-assistant.git](https://github.com/krishnabalajiwork/farmai-assistant.git)
+cd farmai-assistant
+pip install -r requirements.txt
+
+```
+
+### 2. Export API Key
+
+```bash
+# For macOS / Linux:
+export GROQ_API_KEY="your-groq-api-key-here"
+
+# For Windows PowerShell:
+$env:GROQ_API_KEY="your-groq-api-key-here"
+
+```
+
+### 3. Launch App
+
+```bash
+streamlit run app.py
+
+```
+
+Access the local development server at `http://localhost:8501`.
+
+---
+
+## 🐛 Troubleshooting & Known Fixes
+
+#### 1. Asynchronous Event Loop Errors (`RuntimeError: This event loop is already running`)
+
+* **Cause:** Streamlit's execution thread collides with standard async loops inside LangChain.
+* **Solution:** Ensure `nest-asyncio` is initialized at the very top of `app.py`:
+```python
+import nest_asyncio
+nest_asyncio.apply()
+
+```
+
+
+
+#### 2. Vector Store Memory Limits on Cloud Deployment
+
+* **Cause:** Large document chunk embeddings overloading Streamlit Cloud memory limits.
+* **Solution:** Pre-index documents into lightweight FAISS indices and load binary vector indexes statically at boot time.
+
+---
+
+## 👨‍💻 Author & Contact
+
+**Chintha Krishna Balaji**
+
+* **GitHub:** [@krishnabalajiwork](https://github.com/krishnabalajiwork)
+* **LinkedIn:** [chintha-krishna-balaji](https://www.linkedin.com/in/chintha-krishna-balaji)
+* **Live App:** [farmai-assistant.streamlit.app](https://farmai-assistant.streamlit.app/)
+
+---
+
+## 📝 License
+
+This project is open-source and available under the [MIT License](https://www.google.com/search?q=LICENSE).
+
+```
+
+```
